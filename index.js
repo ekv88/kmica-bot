@@ -8,9 +8,56 @@ const client = new Client();
 
 let channels = [];
 
+/** Pick one of pre coded colors for esthetic purposes **/
 const randomColor = () => {
   const colors = [8307777, 4310197, 2520036, 6685439, 15794943, 16712355, 15745347, 15784001, 16772866, 14626586];
   return colors[Math.floor(Math.random() * colors.length)]
+};
+
+/** Generate random number - todo extend this to have: from - top option, not just from 0 to N */
+const randomNumber = (num) => Math.floor(Math.random() * num);
+
+/** Send 1 or more cats as single messages using message object */
+const sendCat = (quantity = 1, sendTo, message) =>
+[...Array(Number(quantity || 1))].map(doggo => {
+    message.channel.send({
+      "embed": {
+        "title": sendTo ? ":cat: | This cat is for " + sendTo : ":cat: | Here is a cat",
+        color: randomColor(),
+        "image": {
+          "url": "https://cdn.tatsumaki.xyz/cats/" + Math.floor(Math.random() * 473) + ".jpg"
+        }
+      }
+    });
+  });
+
+
+/** Send 1 or more doggoz as single messages using message object */
+const sendDoggo = (quantity = 1, sendTo, message) => {
+  const url = "https://dog.ceo/api/breeds/image/random/" + quantity;
+  https.get(url, res => {
+    res.setEncoding("utf8");
+    let body = "";
+    res.on("data", data => {
+      body += data;
+    });
+    res.on("end", () => {
+      const { message:doggos } = JSON.parse(body);
+      if(doggos) {
+        doggos.map(doggo => {
+          message.channel.send({
+            "embed": {
+              "title": ":dog: | Here you go, a doggo",
+              color: randomColor(),
+              "image": {
+                "url": doggo
+              }
+            }
+          });
+        })
+      }
+    });
+  });
 }
 
 client.on('ready', () => {
@@ -118,48 +165,25 @@ client.on('message', message => {
         message.channel.send("Tell us traveler, how many doggos? exp: !doggos 3");
         return false;
       }
-      const url = "https://dog.ceo/api/breeds/image/random/" + param1;
-      https.get(url, res => {
-        res.setEncoding("utf8");
-        let body = "";
-        res.on("data", data => {
-          body += data;
-        });
-        res.on("end", () => {
-          const { message:doggos } = JSON.parse(body);
-          if(doggos) {
-            doggos.map(doggo => {
-              message.channel.send({
-                "embed": {
-                  "title": ":dog: | Here you go, a doggo",
-                  color: randomColor(),
-                  "image": {
-                    "url": doggo
-                  }
-                }
-              });
-            })
-          }
-        });
-      });
+      sendDoggo(param1, param2, message);
     }
+
+    /** Alias comands for !dog and !doggo **/
+    if(command === "!dog" || command === "!doggo")
+      sendDoggo(param1, param2, message)
 
     if(command === "!cats") {
       if(!param1) {
         message.channel.send("Tell us traveler, how many cats? exp: !cats 3");
         return false;
       }
-      [...Array(Number(param1))].map(doggo => {
-        message.channel.send({
-          "embed": {
-            "title": param2 ? ":cat: | This cat is for " + param2 : ":cat: | Here is a cat",
-            color: randomColor(),
-            "image": {
-              "url": "https://cdn.tatsumaki.xyz/cats/" + Math.floor(Math.random() * 473) + ".jpg"
-            }
-          }
-        });
-      })
+      sendCat(param1, param2, message);
+    }
+
+    /** Alias comands for !cat **/
+    if(command === "!cat") {
+      sendCat(param1, param2, message);
+      console.log("Cat man")
     }
 
     if(command === "!reci") {
@@ -195,5 +219,5 @@ client.on('message', message => {
     }
 });
 
-// Log our bot in using the token from https://discordapp.com/developers/applications/me
-client.login('NjM5OTY0ODc5NzM4MTA5OTk0.XgASPA.SwnsZ32WKQDE5RBoGpxiWGUHoEE');
+// Get token here: https://discordapp.com/developers/applications/me
+client.login('Discord token boiii');
