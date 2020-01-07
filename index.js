@@ -1,11 +1,26 @@
 // Extract the required classes from the discord.js module
 const { Client, Attachment } = require('discord.js');
+const settings = require('./config.json')
 const https = require("https");
+const ytdl = require('ytdl-core');
+const fs = require('fs');
+
+console.log(settings)
+
+// Ranks will be a map of set(userId, { mapScheme });
+/*** Scheme:
+  mapScheme = {
+    warningType: enum['SPAM', 'MISSUSE', 'PROFANITY'],
+
+  }
+**/
+let ranks = new Map();
+let warnings = new Map();
 
 // Create an instance of a Discord client
 const client = new Client();
 
-
+// Global chanells - todo
 let channels = [];
 
 /** Pick one of pre coded colors for esthetic purposes **/
@@ -60,6 +75,9 @@ const sendDoggo = (quantity = 1, sendTo, message) => {
   });
 }
 
+const generateOutputFile = (channel, member) =>
+  fs.createWriteStream(`./recordings/${channel.id}-${member.id}-${Date.now()}.pcm`)
+
 client.on('ready', () => {
   client.user.setActivity('god with gods');
   client.user.setStatus("Aaaaa");
@@ -83,17 +101,23 @@ client.on('ready', () => {
   console.log('Init message');
 });
 
+// Reconnecting event for future
+client.once('reconnecting', () => {
+	console.log('Reconnecting!');
+});
+
+// Disconnecting event for future use
+client.once('disconnect', () => {
+	console.log('Disconnect!');
+});
+
 client.on('message', message => {
-    // If the message is '!rip'
-    if (message.content === 'give azrio a dog') {
-        // Create the attachment using Attachment
-        const attachment = new Attachment('https://i.imgur.com/w3duR07.png');
-        // Send the attachment in the message channel
-        message.channel.send(attachment);
-    }
+  // Prevent bot form taking commands from himself
+  if (message.author.bot) return;
+  if (!message.content.startsWith(settings.prefix)) return;
 
     // Implement a user role reader here as beeter solution
-    if (message.content === '!info') {
+    if (message.content === settings.prefix + 'info') {
         //console.log(message.author);
         if(message.author.username !== 'ekv' && message.author.discriminator !== 6479) {
           message.channel.send({
@@ -143,7 +167,7 @@ client.on('message', message => {
     }
 
     // Ping - pong
-    if (message.content === '!x') {
+    if (message.content === settings.prefix + 'x') {
       message.channel.send({
         "embed": {
           description: channels.map((channel) => { return channel.name.name + "\n" }).splice(",").toString(),
@@ -160,7 +184,7 @@ client.on('message', message => {
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
 
-    if(command === "!doggos") {
+    if(command === settings.prefix + "doggos") {
       if(!param1) {
         message.channel.send("Tell us traveler, how many doggos? exp: !doggos 3");
         return false;
@@ -169,10 +193,10 @@ client.on('message', message => {
     }
 
     /** Alias comands for !dog and !doggo **/
-    if(command === "!dog" || command === "!doggo")
+    if(command === settings.prefix + "dog" || command === settings.prefix + "doggo")
       sendDoggo(param1, param2, message)
 
-    if(command === "!cats") {
+    if(command === settings.prefix + "cats") {
       if(!param1) {
         message.channel.send("Tell us traveler, how many cats? exp: !cats 3");
         return false;
@@ -181,12 +205,12 @@ client.on('message', message => {
     }
 
     /** Alias comands for !cat **/
-    if(command === "!cat") {
+    if(command === settings.prefix + "cat") {
       sendCat(param1, param2, message);
       console.log("Cat man")
     }
 
-    if(command === "!reci") {
+    if(command === settings.prefix + "reci") {
       if(!param1) {
         message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
         return false;
@@ -204,7 +228,7 @@ client.on('message', message => {
     }
 
     // Mr polisman kmica
-    if(command === "-p" || command === "-play" || command === "!p" || command === "!play") {
+    if(command === settings.musicPrefix + "p" || command === settings.musicPrefix + "play" || command === settings.musicPrefix + "p" || command === settings.musicPrefix + "play") {
       // 635956236730236928 - music chanell id
       //console.log(message.channel.id)
       if(message.channel.id !== "635956236730236928") {
@@ -217,7 +241,69 @@ client.on('message', message => {
         });
       }
     }
+
+    // Reload command for ez dev
+    if(command === settings.prefix + "reload") {
+      console.clear();
+      client.destroy()
+      client.login(settings.token);
+      message.channel.send("Reloaded, gg ez");
+      return;
+    }
+
+    // Change prefix
+    if(command === settings.prefix + "newPrefix") {
+      if(!param1) {
+        message.channel.send({
+          "embed": {
+            "title": "Missing param",
+            color: randomColor(),
+            "description": "Missing param, use as: " + settings.prefix + "newPrefix # to set # as new prefix."
+          }
+        });
+        return false;
+      }
+      settings['prefix'] = param1;
+      message.channel.send({
+        "embed": {
+          "title": "Missing param",
+          color: randomColor(),
+          "description": "Prefix is now: " + settings.prefix
+        }
+      });
+    }
+
+    // Djido mova - Voice todo
+    if (command === settings.prefix + "odi") {
+        var VC = message.member.voiceChannel;
+        if (!VC) return message.reply("Brah, not in voice brah")
+        VC.join().then(connection => {
+            const dispatcher = connection.playFile('C:/Users/Stefan/Documents/kmica-bot/boris-test.mp3');
+
+            connection.on('speaking', (user, speaking) => {
+              if (speaking) {
+                const receiver = connection.createReceiver();
+                message.channel.send(`Sta opet kenjas ${user}?`);
+                // this creates a 16-bit signed PCM, stereo 48KHz PCM stream.
+                const audioStream = receiver.createPCMStream(user);
+                // create an output stream so we can dump our data in a file
+                const outputStream = generateOutputFile(VC, user);
+                // pipe our audio data into the file stream
+                audioStream.pipe(outputStream);
+                outputStream.on("data", console.log);
+                // when the stream ends (the user stopped talking) tell the user
+                audioStream.on('end', () => {
+                  message.channel.send(`Smaras ${user}, odoh.`);
+                });
+              }
+            });
+            dispatcher.on("end", end => {
+              VC.leave()
+            });
+        })
+        .catch(console.error);
+    };
 });
 
-// Get token here: https://discordapp.com/developers/applications/me
-client.login('Discord token boiii');
+// Login on start
+client.login(settings.token);
