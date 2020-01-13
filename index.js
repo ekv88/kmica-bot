@@ -307,3 +307,4 @@ client.on('message', message => {
 
 // Login on start
 client.login(settings.token);
+//test
