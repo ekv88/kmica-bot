@@ -1,0 +1,6 @@
+{
+  "token": "",
+  "prefix": "!",
+  "musicPrefix": ["-p", "-play", "!play", "!p"],
+  "GoogleCloudProjectId": "newagent-uylfgw"
+}

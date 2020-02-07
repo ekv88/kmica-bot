@@ -121,6 +121,15 @@ client.once('disconnect', () => {
     console.log('Disconnect!');
 });
 
+client.on('guildMemberAdd', message => {
+    //message.guild.channels.get('channelID').send('**' + message.user.username + '**, has joined the server!'); 
+	message.author.send('Djes mala?\n\Slusaj, moras se verifikovati da vidis resto server.\n\Idi u kanal i verifikuj se da ne bi zavrsio u kanalu, jasno?!');
+});
+
+client.on('guildMemberRemove', message => {
+    message.guild.channels.get('657649922123890710').send('**' + message.user.username + '**, picketina nas napustila, ko od ne mora ni da se vraca!');
+});
+
 client.on('message', message => {
     // Prevent bot form taking commands from himself
     if (message.author.bot) return;
@@ -131,8 +140,11 @@ client.on('message', message => {
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
 
     // TODO log
-    console.log(settings.musicPrefix.includes(command), "Komanda", command, settings.musicPrefix, message.member.roles);
-
+    console.log("Primljena poruka:", command, settings.musicPrefix, message.channel.type);
+	
+	// Don't proceed deeper into the code if command is direct message
+    if (message.channel.type === 'dm') return;
+	
     // Mr polisman kmica
     if(settings.musicPrefix.includes(command)) {
         if(String(message.channel.id) !== "635956236730236928") {
@@ -292,7 +304,10 @@ client.on('message', message => {
                     msg.react('😡');
                     msg.reply("Evo tebi jedan ban za nepostovanje.").then(msg => msg.delete(15000));
                     if (msg.guild.member(msg.author).bannable) {
-                        message.guild.ban(msg.author) // Bans the user
+						// Ban user method
+						message.guild.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
+							.then(user => console.log('Banned ' + msg.author.username || msg.author.id || user + 'from ' + message.guild))
+							.catch(console.error);
                     }
                 }
                 if (answer < 15 && answer > 5) {
@@ -512,4 +527,4 @@ client.on('message', message => {
 });
 
 // Login on start
-client.login(settings.token);
+client.login(process.env.CLIENT_TOKEN || settings.token);
