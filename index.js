@@ -155,23 +155,26 @@ client.on('message', message => {
             return false;
         }
 		
-		calucalteTheGame(param1).then(game => {
-			const { summonerName, champion, icon, win, kda, kills, deaths, assists, pentaKills, role, lane } = game;
+		console.log(message.content.substring(5))
+		
+		calucalteTheGame(message.content.substring(5)).then(game => {
+			const { summonerName, championName, icon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
+			console.log(historyUrl, game);
 			message.channel.send({
 			  "embed": {
-				"title": "Ponovo fejluje sa " + champion,
+				"title": "Ponovo fejluje sa " + championName,
 				"color": 53380,
 				"description": "```\nPlacehodler text za prozivku kasnije```",
 				"footer": {
 				  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
-				  "text": "Thiis was provided by KmicaBot"
+				  "text": "This was provided by KmicaBot"
 				},
 				"thumbnail": {
 				  "url": icon
 				},
 				"author": {
 				  "name": summonerName,
-				  "url": "https://mecUrl.com",
+				  "url": historyUrl,
 				  "icon_url": icon
 				},
 				"fields": [{
