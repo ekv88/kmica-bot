@@ -7,6 +7,7 @@ const ytdl = require('ytdl-core');
 const fs = require('fs');
 const dialogflow = require('dialogflow');
 const cahData = require('./cah-data.js');
+const { calucalteTheGame } = require('./rito.js')
 
 const sessionClient = new dialogflow.SessionsClient();
 const sessionPath = sessionClient.sessionPath(settings.GoogleCloudProjectId, 'kmicaBot');
@@ -130,6 +131,11 @@ client.on('guildMemberRemove', message => {
     message.guild.channels.get('657649922123890710').send('**' + message.user.username + '**, picketina nas napustila, ko od ne mora ni da se vraca!');
 });
 
+const getGameData = async (summonerName) => {
+	const data = calucalteTheGame(summonerName);
+	return await data;
+}
+
 client.on('message', message => {
     // Prevent bot form taking commands from himself
     if (message.author.bot) return;
@@ -141,6 +147,51 @@ client.on('message', message => {
 
     // TODO log
     console.log("Primljena poruka:", command, settings.musicPrefix, message.channel.type);
+	
+	
+	if(command === settings.prefix + 'lol') {
+		if(!param1) {
+            message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
+            return false;
+        }
+		
+		calucalteTheGame(param1).then(game => {
+			const { summonerName, champion, icon, win, kda, kills, deaths, assists, pentaKills, role, lane } = game;
+			message.channel.send({
+			  "embed": {
+				"title": "Ponovo fejluje sa " + champion,
+				"color": 53380,
+				"description": "```\nPlacehodler text za prozivku kasnije```",
+				"footer": {
+				  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
+				  "text": "Thiis was provided by KmicaBot"
+				},
+				"thumbnail": {
+				  "url": icon
+				},
+				"author": {
+				  "name": summonerName,
+				  "url": "https://mecUrl.com",
+				  "icon_url": icon
+				},
+				"fields": [{
+					"name": "Kills",
+					"value": kills,
+					"inline": true
+				  },{
+					"name": "Deaths",
+					"value": deaths,
+					"inline": true
+				  },{
+					"name": "Assists",
+					"value": assists,
+					"inline": true
+				  }]
+			  }
+			});
+		});
+		
+    }
 	
 	// Don't proceed deeper into the code if command is direct message
     if (message.channel.type === 'dm') return;
@@ -157,7 +208,7 @@ client.on('message', message => {
             });
         }
     }
-
+	
     // Ignore rest of messages
     if (!message.content.startsWith(settings.prefix)) return;
 

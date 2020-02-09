@@ -1,13 +1,12 @@
 const settings = require('./config.json');
 const https = require("https");
 const fetch = require("node-fetch");
-const RIOT_KEY = settings.ritoKey;
+const RIOT_KEY = process.env.RIOT_KEY || settings.ritoKey;
+const FALLBACK_VERSION = process.env.FALLBACK_VERSION || "10.3.1";
 
 // Global data
-let { championList, gameVersion } = {};
-
-// Methods
-//-----------------------------------------------
+let championList;
+let gameVersion = FALLBACK_VERSION;
 
 // Extract game versions
 const getLastGameVersion = async () =>
@@ -16,7 +15,7 @@ const getLastGameVersion = async () =>
 		.then(json => json[0]);
 
 const getChampionList = async () =>
-	await fetch("http://ddragon.leagueoflegends.com/cdn/" + gameVersion  + "/data/en_US/champion.json")
+	await fetch("http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/data/en_US/champion.json")
 		.then(res => res.json())
 		.then(json => Object.keys(json.data).map((k) => json.data[k]));
 
@@ -64,48 +63,52 @@ const getLastGameStats = async (summonerName) => {
 	// Extract participantId (temp ID in game) form "participantIdentities" so we can look for data only with that ID
 	const participantId = await lastGameData.participantIdentities.filter(x => x.player.accountId == accountId)[0].participantId;
 	// Extract stat only for player we are interested in
-	return lastGameData.participants.filter(x => x.participantId == participantId)[0];
+	return {...lastGameData.participants.filter(x => x.participantId == participantId)[0], ...summoner, summonerName: summonerName}
 }
 
-
-
-// Execute
-//-----------------------------------------------
-
-const printStats = (gameData, summonerName) => {
-	// console.log(gameData);
-	const { championId, stats: { win, kills, deaths, assists }, timeline: { role, lane } } = gameData;
-
-	console.log("\n\n\n\n-------------------------- LAST GAME STATS ----------------------------");
-	console.log("Summoner name: " + summonerName);
-	console.log("Champion: " + championList.find(x => x.key == championId)["name"]);
-	console.log("Win: " + win);
-	console.log("KDA: " + getKDA(kills, deaths, assists));
-	console.log("Kills: " + kills);
-	console.log("Deaths: " + deaths);
-	console.log("Assists: " + assists);
-	console.log("Role: " + role);
-	console.log("Lane: " + lane);
-	console.log("-----------------------------------------------------------------------\n\n\n\n");
+// Prettify data for simplear use later on Discord part
+const parseSummonerAndGameData = async (gameData) => {
+	const { championId, profileIconId, summonerName, stats: { win, kills, deaths, assists, pentaKills }, timeline: { role, lane } } = gameData;
+	
+	championList = await getChampionList();
+	
+	return { 
+		summonerName: summonerName,
+		champion: championList.find(x => x.key == championId)["name"],
+		icon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
+		win: win,
+		kda: getKDA(kills, deaths, assists),
+		kills: kills,
+		deaths: deaths,
+		assists: assists,
+		pentaKills: pentaKills,
+		role: role,
+		lane: lane
+	};
 }
 
-const calucalteTheGame = async (summonerName) => {
+// Fuse summoner data with game data and assets
+const calucalteTheGame = async(summonerName) => {
 	if(!gameVersion) {
 		getLastGameVersion().then(async version => {
 			gameVersion = version;
-			console.log("Current game vaersion: " + version)
-			championList = await getChampionList();
-			getLastGameStats(summonerName)
-				.then(gameData => printStats(gameData, summonerName));
 		});
-	} else {
-		getLastGameStats(summonerName)
-			.then(gameData => printStats(gameData, summonerName));
 	}
+	return await getLastGameStats(summonerName)
+		.then(gameData => parseSummonerAndGameData(gameData));
 }
 
-calucalteTheGame('ProblematicSushi')
+// Execute here
+// calucalteTheGame('ProblematicSushi')
 
+// Node process watcher
 process.on('uncaughtException', function (err) {
     console.log(err);
-}); 
+});
+
+// Export functions for discord part
+module.exports = {
+	// getLastGameStats: getLastGameStats,
+	// parseSummonerAndGameData: parseSummonerAndGameData,
+    calucalteTheGame: calucalteTheGame
+}
