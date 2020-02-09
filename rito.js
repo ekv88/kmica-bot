@@ -76,14 +76,16 @@ const parseSummonerAndGameData = async (gameData) => {
 	championList = await getChampionList();
 	
 	let historyUrl = matchHistoryUri.split('/');
+	const championName = await championList.find(x => x.key == championId)["name"]
 
 	// Return parsed data
 	return {
 		summonerName: summonerName,
-		championName: await championList.find(x => x.key == championId)["name"],
+		summonerIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
+		championName: championName,
 		championId: championId,
+		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName + ".png",
 		historyUrl: "https://matchhistory.eune.leagueoflegends.com/en/#match-details/" + region + "/" + historyUrl[historyUrl.length - 1],
-		icon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
 		win: win,
 		kda: getKDA(kills, deaths, assists),
 		kills: kills,

@@ -37,7 +37,28 @@ let channels = [];
 /** Pick one of pre coded colors for esthetic purposes **/
 const randomColor = () => {
     const colors = [8307777, 4310197, 2520036, 6685439, 15794943, 16712355, 15745347, 15784001, 16772866, 14626586];
-    return colors[Math.floor(Math.random() * colors.length)]
+    return colors[randomNumber(colors.length - 1)]
+};
+
+/** Random prozivka **/
+const randomProzivka = () => {
+    const prozivka = [
+		'Oduvek me je zanimalo da li si pao s\' neba andjele moj mali i u tom padu zadobio povrede glave koje su ostavile mentalne posledice pa sad nisi sposoban da imas pozitivan skor?',
+		'Necu da kazem nista. Dacu minut cutanja mozdanim celijama tvojih saigraca, a mozda i njima jer si im provereno dao rak.',
+		'AI treniran na Intelu 4004 bi bolje odigrao od tebe.',
+		'Probaj u opcijama da pogledas "Accessibility settings" posto si ocito retardiran.',
+		'Hajde `rm -rf leagueoflegeneds/` nije ovo za tebe.',
+	];
+    return prozivka[randomNumber(prozivka.length - 1)]
+};
+const randomTitleProzivka = (champ) => {
+    const prozivka = [
+		'Hendikepirani ' + champ + ' ponovo napada',
+		'Tuzni ' + champ,
+		'Garage sale ' + champ,
+		'-10 IQ ' + champ,
+	];
+    return prozivka[randomNumber(prozivka.length - 1)]
 };
 
 /** Generate random number - todo extend this to have: from - top option, not just from 0 to N */
@@ -158,24 +179,24 @@ client.on('message', message => {
 		console.log(message.content.substring(5))
 		
 		calucalteTheGame(message.content.substring(5)).then(game => {
-			const { summonerName, championName, icon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
+			const { summonerName, summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
 			console.log(historyUrl, game);
 			message.channel.send({
 			  "embed": {
-				"title": "Ponovo fejluje sa " + championName,
+				"title": randomTitleProzivka(championName),
 				"color": 53380,
-				"description": "```\nPlacehodler text za prozivku kasnije```",
+				"description": "```\n" + randomProzivka() + "```",
 				"footer": {
 				  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
 				  "text": "This was provided by KmicaBot"
 				},
 				"thumbnail": {
-				  "url": icon
+				  "url": championIcon
 				},
 				"author": {
 				  "name": summonerName,
 				  "url": historyUrl,
-				  "icon_url": icon
+				  "icon_url": summonerIcon
 				},
 				"fields": [{
 					"name": "Kills",
