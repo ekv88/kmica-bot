@@ -4,9 +4,9 @@ const { Client, Attachment } = Discord;
 const settings = require('./config.json');
 const { importRiotUserList } = require('./ritoUserList.js');
 const https = require("https");
-const ytdl = require('ytdl-core');
 const fs = require('fs');
 const dialogflow = require('dialogflow');
+const ytdl = require('ytdl-core');
 const cahData = require('./cah-data.js');
 const { calucalteTheGame } = require('./rito.js')
 
@@ -54,8 +54,11 @@ const randomProzivka = () => {
 		'AI treniran na Intelu 4004 bi bolje odigrao od tebe.',
 		'Probaj u opcijama da pogledas "Accessibility settings" posto si ocito retardiran.',
 		'Hajde `rm -rf leagueoflegeneds/` nije ovo za tebe.',
+		'Boban ti je reko da si los',
+		'A da se batalis ti ove igre i da probas nesto na tvom mentalnom nivou, recimo slagalica od 4 dela.',
+		'Nafido si vise cak i od Azre',
 	];
-    return prozivka[randomNumber(prozivka.length - 1)]
+    return prozivka[randomNumber(prozivka.length)]
 };
 const randomTitleProzivka = (champ) => {
     const prozivka = [
@@ -64,7 +67,7 @@ const randomTitleProzivka = (champ) => {
 		'Garage sale ' + champ,
 		'-10 IQ ' + champ,
 	];
-    return prozivka[randomNumber(prozivka.length - 1)]
+    return prozivka[randomNumber(prozivka.length)]
 };
 
 /** Generate random number - todo extend this to have: from - top option, not just from 0 to N */
@@ -270,11 +273,28 @@ client.on('message', message => {
         if(String(message.channel.id) !== "635956236730236928") {
             message.channel.send({
                 "embed": {
-                    "title": ":police_officer: Sta radis to tebrane?",
+                    "title": ":police_officer: Wrong channel!",
                     color: randomColor(),
-                    "description": "Tebrane, ajde koristi muci chanel, pa nije tu dzabadava."
+                    "description": "Please use <#635956236730236928> channel or i will start bullying you."
                 }
             });
+			const streamOptions = { seek: 0, volume: 1 };
+			let voiceChannel = message.member.voiceChannel;
+			voiceChannel.join().then(connection => {
+				console.log("joined channel");
+				let urlz = [
+					'https://www.youtube.com/watch?v=XY55rmPzd4M', 
+					'https://www.youtube.com/watch?v=ODcPX_gwhdY', 
+					'https://www.youtube.com/watch?v=Y1uqniT07RU', 
+					'https://www.youtube.com/watch?v=PUcf5Yw75gA'
+				];
+				const stream = ytdl(urlz[randomNumber(urlz.length)], { filter : 'audioonly' });
+				const dispatcher = connection.playStream(stream, streamOptions);
+				dispatcher.on("end", end => {
+					console.log("left channel");
+					voiceChannel.leave();
+				});
+			}).catch(err => console.log(err));
         }
     }
 	
