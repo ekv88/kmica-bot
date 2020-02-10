@@ -50,34 +50,41 @@ const getKDA = (kills = 0, deaths = 0, assists = 0) =>
 	((parseInt(kills) + parseInt(assists)) / deaths).toFixed(2);
 
 // Combine all methods to return spcific user gamme stats data
-const getLastGameStats = async (summonerName) => {
+const getLastGameStats = async (summonerName, lastCheck) => {
 	// Get summoner data by summoner name
 	const summoner = await getSummonerDataBySummonerName(summonerName);
 	// Extract needed variables from summoner data
 	const { accountId, summonerLevel } = summoner;
 	// Extract all match history using accountId
 	const matches = await getMatchesBySumonerAccountId(accountId);
+	// Extract timestamp
+	const timestamp = matches.matches[0].timestamp;
+	// Check if this game was already checked
+	if(lastCheck >= timestamp) return {...matches.matches[0], newGame: false};
 	// Select last game from match history and look for data.
 	const lastGameData = await getGameData(matches.matches[0].gameId);
-	// ------
-	// @TODO: Check later if last game timestamp was already used and if it is exit process.
-	// ------
 	// Extract participantId (temp ID in game) and matchHistoryUri form "participantIdentities" so we can look for data only with that ID
 	const { participantId, player: { matchHistoryUri, currentPlatformId: region, summonerName: sumName } } = await lastGameData.participantIdentities.filter(x => x.player.accountId == accountId)[0];
 	// Extract stat only for player we are interested in
-	return {...lastGameData.participants.filter(x => x.participantId == participantId)[0], ...summoner, summonerName: sumName, matchHistoryUri: matchHistoryUri, region}
+	return {...lastGameData.participants.filter(x => x.participantId == participantId)[0], ...summoner, timestamp: timestamp, summonerName: sumName, matchHistoryUri: matchHistoryUri, region, newGame: true}
 }
 
 // Prettify data for simplear use later on Discord part
 const parseSummonerAndGameData = async (gameData) => {
-	const { championId, profileIconId, summonerName, matchHistoryUri, region, stats: { win, kills, deaths, assists, pentaKills }, timeline: { role, lane } } = gameData;
+	// If this isn't new game dont pass all game data
+	const { newGame } = gameData;
+	if(newGame === false) return { ...gameData, newGame: newGame }
+	
+	// Spred all variables
+	const { championId, profileIconId, summonerName, matchHistoryUri, timestamp, region, stats: { win, kills, deaths, assists, pentaKills }, timeline: { role, lane } } = gameData;
 	
 	// Await for champion list so we can normalize names
 	championList = await getChampionList();
 	
 	let historyUrl = matchHistoryUri.split('/');
 	const championName = await championList.find(x => x.key == championId)["name"]
-
+	
+	// @TODO: Build match history url later https://matchhistory.eune.leagueoflegends.com/en/#match-details/EUN1/2377040059/33254194
 	// Return parsed data
 	return {
 		summonerName: summonerName,
@@ -87,25 +94,25 @@ const parseSummonerAndGameData = async (gameData) => {
 		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName + ".png",
 		historyUrl: "https://matchhistory.eune.leagueoflegends.com/en/#match-details/" + region + "/" + historyUrl[historyUrl.length - 1],
 		win: win,
-		kda: getKDA(kills, deaths, assists),
+		kda: parseInt(getKDA(kills, deaths, assists)),
 		kills: kills,
 		deaths: deaths,
 		assists: assists,
 		pentaKills: pentaKills,
 		role: role,
-		lane: lane
+		lane: lane,
+		timestamp: timestamp,
+		newGame: newGame,
 	};
 }
 
-// https://matchhistory.eune.leagueoflegends.com/en/#match-details/EUN1/2377040059/33254194
-
 // Fuse summoner data with game data and assets
-const calucalteTheGame = async(summonerName) => {
+const calucalteTheGame = async(summonerName, lastCheck) => {
 	if(!gameVersion) {
 		getLastGameVersion()
 			.then(async version => gameVersion = version);
 	}
-	return await getLastGameStats(summonerName)
+	return await getLastGameStats(summonerName, lastCheck)
 		.then(gameData => parseSummonerAndGameData(gameData));
 }
 

@@ -1,7 +1,8 @@
 // Extract the required classes from the discord.js module
-const Discord = require('discord.js')
+const Discord = require('discord.js');
 const { Client, Attachment } = Discord;
 const settings = require('./config.json');
+const { importRiotUserList } = require('./ritoUserList.js');
 const https = require("https");
 const ytdl = require('ytdl-core');
 const fs = require('fs');
@@ -12,7 +13,12 @@ const { calucalteTheGame } = require('./rito.js')
 const sessionClient = new dialogflow.SessionsClient();
 const sessionPath = sessionClient.sessionPath(settings.GoogleCloudProjectId, 'kmicaBot');
 
-console.log(settings);
+// console.log(settings);
+
+/** Riot value */
+let riotUserList = importRiotUserList;
+let riotIntervalFunction;
+let riotIntervalValue = 1000 * 60 * 10;
 
 // Ranks will be a map of set(userId, { mapScheme });
 /*** Scheme:
@@ -43,7 +49,7 @@ const randomColor = () => {
 /** Random prozivka **/
 const randomProzivka = () => {
     const prozivka = [
-		'Oduvek me je zanimalo da li si pao s\' neba andjele moj mali i u tom padu zadobio povrede glave koje su ostavile mentalne posledice pa sad nisi sposoban da imas pozitivan skor?',
+		'Oduvek me je zanimalo da li si pao s\' neba andjele moj mali i u tom padu zadobio povrede glave koje su ostavile mentalne posledice pa sad nisi sposoban da imas pozitivan skor? ',
 		'Necu da kazem nista. Dacu minut cutanja mozdanim celijama tvojih saigraca, a mozda i njima jer si im provereno dao rak.',
 		'AI treniran na Intelu 4004 bi bolje odigrao od tebe.',
 		'Probaj u opcijama da pogledas "Accessibility settings" posto si ocito retardiran.',
@@ -152,11 +158,6 @@ client.on('guildMemberRemove', message => {
     message.guild.channels.get('657649922123890710').send('**' + message.user.username + '**, picketina nas napustila, ko od ne mora ni da se vraca!');
 });
 
-const getGameData = async (summonerName) => {
-	const data = calucalteTheGame(summonerName);
-	return await data;
-}
-
 client.on('message', message => {
     // Prevent bot form taking commands from himself
     if (message.author.bot) return;
@@ -170,51 +171,94 @@ client.on('message', message => {
     console.log("Primljena poruka:", command, settings.musicPrefix, message.channel.type);
 	
 	
-	if(command === settings.prefix + 'lol') {
-		if(!param1) {
+	if(command === settings.prefix + 'lol-interval') {
+		if(!param1 || !param2) {
             message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
             return false;
         }
+		riotIntervalValue = param1;
+	}
+	
+	if(command === settings.prefix + 'lol-user-add') {
+		if(!param1) {
+            message.channel.send("Ukucaj: `" + settings.prefix + "lol-user-add` [@DISCORD-TAG] [SUMMONER-NAME]");
+            return false;
+        }
+		let summonerName = message.content.substring(15 + param1.length);
+		let discordName = message.content.substring(5);
 		
-		console.log(message.content.substring(5))
-		
-		calucalteTheGame(message.content.substring(5)).then(game => {
-			const { summonerName, summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
-			console.log(historyUrl, game);
-			message.channel.send({
-			  "embed": {
-				"title": randomTitleProzivka(championName),
-				"color": 53380,
-				"description": "```\n" + randomProzivka() + "```",
-				"footer": {
-				  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
-				  "text": "This was provided by KmicaBot"
-				},
-				"thumbnail": {
-				  "url": championIcon
-				},
-				"author": {
-				  "name": summonerName,
-				  "url": historyUrl,
-				  "icon_url": summonerIcon
-				},
-				"fields": [{
-					"name": "Kills",
-					"value": kills,
-					"inline": true
-				  },{
-					"name": "Deaths",
-					"value": deaths,
-					"inline": true
-				  },{
-					"name": "Assists",
-					"value": assists,
-					"inline": true
-				  }]
-			  }
+		let newUser = {
+			summonerName: summonerName,
+			discordName: param1,
+		}
+		riotUserList.push(newUser);
+		console.log(riotUserList);
+	}
+	
+	/** List users in console */
+	if(command === settings.prefix + 'lol-list-users') console.log(riotUserList)
+	
+	/** Stop checking */
+	if(command === settings.prefix + 'lol-stop') {
+		clearInterval(riotIntervalFunction);
+		console.log("\n-----STOPIRANO-----\n");
+	}
+	
+	/** Stat checking */
+	if(command === settings.prefix + 'lol-start') {
+		riotIntervalFunction = setInterval(() => {
+			console.log("\n----- Tura proveravanja -----\n");
+			riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
+				setTimeout(() => {
+					calucalteTheGame(summonerName, lastCheck).then(game => {
+						const { timestamp, newGame } = game;
+						// Update timestamp
+						riotUserList[key]["lastCheck"] = timestamp;
+						console.log("Summoner:", summonerName, "New game: ", newGame);
+						
+						// Return if is not a new game
+						if(newGame === false) return false;
+						
+						let { summonerName, summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
+						
+						// Dont flame if kda is bigger than 1.3
+						if(kda > 1.30) return false;
+						message.channel.send({
+						  "embed": {
+							"title": randomTitleProzivka(championName),
+							"color": win ? 3986977 : 14033185,
+							"description": "\n" + discordName + "```\n" + randomProzivka() + "```",
+							"footer": {
+							  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
+							  "text": "This was provided by KmicaBot"
+							},
+							"thumbnail": {
+							  "url": championIcon
+							},
+							"author": {
+							  "name": summonerName,
+							  "url": historyUrl,
+							  "icon_url": summonerIcon
+							},
+							"fields": [{
+								"name": "Kills",
+								"value": kills,
+								"inline": true
+							  },{
+								"name": "Deaths",
+								"value": deaths,
+								"inline": true
+							  },{
+								"name": "Assists",
+								"value": assists,
+								"inline": true
+							  }]
+						  }
+						});
+					});
+				}, 1300 * key);
 			});
-		});
-		
+		}, param1 || riotIntervalValue);		
     }
 	
 	// Don't proceed deeper into the code if command is direct message
