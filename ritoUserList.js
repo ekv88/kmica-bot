@@ -1,7 +1,4 @@
 const userList = [
-	{ summonerName: 'ekv', discordName: '<@!143490597804703745>', lastCheck: 0 }
-]
-const userList2 = [
 	{ summonerName: 'ekv', discordName: '<@!143490597804703745>', lastCheck: 0 },
 	{ summonerName: 'ProblematicSushi', discordName: '<@!256513486559903744>', lastCheck: 0 },
 	{ summonerName: 'Duc', discordName: '<@!475391468157141002>', lastCheck: 0 },
