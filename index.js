@@ -211,15 +211,16 @@ client.on('message', message => {
 			riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
 				setTimeout(() => {
 					calucalteTheGame(summonerName, lastCheck).then(game => {
-						const { timestamp, newGame } = game;
+						console.log("\nCheck.", game);
+						// Spred values
+						const { summonerName: sumName, timestamp, newGame } = game;
 						// Update timestamp
 						riotUserList[key]["lastCheck"] = timestamp;
-						console.log("Summoner:", summonerName, "New game: ", newGame);
 						
 						// Return if is not a new game
 						if(newGame === false) return false;
 						
-						let { summonerName, summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
+						let { summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
 						
 						// Dont flame if kda is bigger than 1.3
 						if(kda > 1.30) return false;
@@ -236,7 +237,7 @@ client.on('message', message => {
 							  "url": championIcon
 							},
 							"author": {
-							  "name": summonerName,
+							  "name": sumName,
 							  "url": historyUrl,
 							  "icon_url": summonerIcon
 							},
@@ -256,7 +257,7 @@ client.on('message', message => {
 						  }
 						});
 					});
-				}, 1300 * key);
+				}, 2000 * key);
 			});
 		}, param1 || riotIntervalValue);		
     }

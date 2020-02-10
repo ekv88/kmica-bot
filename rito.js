@@ -26,7 +26,8 @@ const getSummonerDataBySummonerName = async (summonerName) => {
     const url = "https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + summonerName + "?api_key=" + RIOT_KEY;
 	return await fetch(url)
 		.then(res => res.json())
-			.then(json => json);
+			.then(json => json)
+				.catch(error => console.error("getSummonerDataBySummonerName", error));
 };
 
 // Get match history by accountId
@@ -34,7 +35,8 @@ const getMatchesBySumonerAccountId = async (accountId) => {
 	const url = "https://eun1.api.riotgames.com/lol/match/v4/matchlists/by-account/" + accountId + "?api_key=" + RIOT_KEY;
 	return await fetch(url)
 		.then(res => res.json())
-			.then(json => json);
+			.then(json => json)
+				.catch(error => console.error("getMatchesBySumonerAccountId", error));
 }
 
 // Get full info about game stats by gameId
@@ -42,7 +44,8 @@ const getGameData = async (gameId) => {
 	const url = "https://eun1.api.riotgames.com/lol/match/v4/matches/" + gameId + "?api_key=" + RIOT_KEY;
 	return await fetch(url)
 		.then(res => res.json())
-			.then(json => json);
+			.then(json => json)
+				.catch(error => console.error("getGameData", error));
 }
 
 // Calculate KDA (Kills, Deaths, Assists) = K + A / D
@@ -60,7 +63,7 @@ const getLastGameStats = async (summonerName, lastCheck) => {
 	// Extract timestamp
 	const timestamp = await matches.matches[0].timestamp;
 	// Check if this game was already checked
-	if(lastCheck >= timestamp) return {...matches.matches[0], newGame: false};
+	if(lastCheck >= timestamp) return {...matches.matches[0], summonerName: summonerName, newGame: false };
 	// Select last game from match history and look for data.
 	const lastGameData = await getGameData(matches.matches[0].gameId);
 	// Extract participantId (temp ID in game) and matchHistoryUri form "participantIdentities" so we can look for data only with that ID
@@ -91,7 +94,7 @@ const parseSummonerAndGameData = async (gameData) => {
 		summonerIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
 		championName: championName,
 		championId: championId,
-		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName + ".png",
+		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName.replace(/ /g,'') + ".png",
 		historyUrl: "https://matchhistory.eune.leagueoflegends.com/en/#match-details/" + region + "/" + historyUrl[historyUrl.length - 1],
 		win: win,
 		kda: parseInt(getKDA(kills, deaths, assists)),
@@ -113,7 +116,8 @@ const calucalteTheGame = async(summonerName, lastCheck) => {
 			.then(async version => gameVersion = version);
 	}
 	return await getLastGameStats(summonerName, lastCheck)
-		.then(gameData => parseSummonerAndGameData(gameData));
+		.then(gameData => parseSummonerAndGameData(gameData))
+		.catch(error => console.error(error));
 }
 
 // Node process watcher
