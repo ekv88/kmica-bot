@@ -58,7 +58,7 @@ const getLastGameStats = async (summonerName, lastCheck) => {
 	// Extract all match history using accountId
 	const matches = await getMatchesBySumonerAccountId(accountId);
 	// Extract timestamp
-	const timestamp = matches.matches[0].timestamp;
+	const timestamp = await matches.matches[0].timestamp;
 	// Check if this game was already checked
 	if(lastCheck >= timestamp) return {...matches.matches[0], newGame: false};
 	// Select last game from match history and look for data.
