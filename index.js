@@ -196,12 +196,12 @@ client.on('message', message => {
 			lastCheck: 0,
 		}
 		riotUserList.push(newUser);
-		message.channel.send("New user added:\n\nSummoner name: " + summonerName + "\nDiscord user: " + discordName;
+		message.channel.send("New user added:\n\nSummoner name: " + summonerName + "\nDiscord user: " + discordName);
 	}
 	
 	/** List users in console */
 	if(command === settings.prefix + 'lol-list-users') {
-		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString();
+		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString());
 		console.log(riotUserList)
 	}
 	
