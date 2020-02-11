@@ -57,6 +57,13 @@ const randomProzivka = () => {
 		'Boban ti je reko da si los',
 		'A da se batalis ti ove igre i da probas nesto na tvom mentalnom nivou, recimo slagalica od 4 dela.',
 		'Nafido si vise cak i od Azre',
+    'Tebe tebra ne treba ni komentarisati...',
+    'Not even Noah can carry you animal...',
+    'If the human body is 75% water, how can you be 100% idiot?',
+    'If I wanted to kill myself I would jump from your ego to your elo',
+    'Ti si nesto poput Forest Gumpa, ali bez fazona trcanja. To ti dodje samo retardiran.',
+    'Plx Uninstall or kill yourself',
+
 	];
     return prozivka[randomNumber(prozivka.length)]
 };
@@ -66,6 +73,9 @@ const randomTitleProzivka = (champ) => {
 		'Tuzni ' + champ,
 		'Garage sale ' + champ,
 		'-10 IQ ' + champ,
+    'Retardirani' + champ,
+    'Best eastern Kosovo' + champ,
+    champ + 'Bot',
 	];
     return prozivka[randomNumber(prozivka.length)]
 };
@@ -153,7 +163,7 @@ client.once('disconnect', () => {
 });
 
 client.on('guildMemberAdd', message => {
-    //message.guild.channels.get('channelID').send('**' + message.user.username + '**, has joined the server!'); 
+    //message.guild.channels.get('channelID').send('**' + message.user.username + '**, has joined the server!');
 	message.author.send('Djes mala?\n\Slusaj, moras se verifikovati da vidis resto server.\n\Idi u kanal i verifikuj se da ne bi zavrsio u kanalu, jasno?!');
 });
 
@@ -172,7 +182,7 @@ client.on('message', message => {
 
     // TODO log
     console.log("Message (" + message.channel.type + "):", command, message.content);
-	
+
 	if(command === settings.prefix + 'lol-interval') {
 		if(!param1 || !param2) {
             message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
@@ -181,7 +191,7 @@ client.on('message', message => {
 		message.channel.send("LOL watcher is enabled :eyes:");
 		riotIntervalValue = param1;
 	}
-	
+
 	if(command === settings.prefix + 'lol-user-add') {
 		if(!param1) {
             message.channel.send("Ukucaj: `" + settings.prefix + "lol-user-add` [@DISCORD-TAG] [SUMMONER-NAME]");
@@ -189,7 +199,7 @@ client.on('message', message => {
         }
 		let summonerName = message.content.substring(15 + param1.length);
 		let discordName = message.content.substring(5);
-		
+
 		let newUser = {
 			summonerName: summonerName,
 			discordName: param1,
@@ -198,20 +208,20 @@ client.on('message', message => {
 		riotUserList.push(newUser);
 		message.channel.send("New user added:\n\nSummoner name: " + summonerName + "\nDiscord user: " + discordName);
 	}
-	
+
 	/** List users in console */
 	if(command === settings.prefix + 'lol-list-users') {
 		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString());
 		console.log(riotUserList)
 	}
-	
+
 	/** Stop checking */
 	if(command === settings.prefix + 'lol-stop') {
 		clearInterval(riotIntervalFunction);
 		message.channel.send("LOL watcher is disabled");
 		console.log("\n-----STOPIRANO-----\n");
 	}
-	
+
 	/** Stat checking */
 	if(command === settings.prefix + 'lol-start') {
 		riotIntervalFunction = setInterval(() => {
@@ -224,12 +234,12 @@ client.on('message', message => {
 						const { summonerName: sumName, timestamp, newGame } = game;
 						// Update timestamp
 						riotUserList[key]["lastCheck"] = timestamp;
-						
+
 						// Return if is not a new game
 						if(newGame === false) return false;
-						
+
 						let { summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
-						
+
 						// Dont flame if kda is bigger than 1.3
 						if(kda > 1.30) return false;
 						message.channel.send({
@@ -267,12 +277,12 @@ client.on('message', message => {
 					});
 				}, 2000 * key);
 			});
-		}, param1 || riotIntervalValue);		
+		}, param1 || riotIntervalValue);
     }
-	
+
 	// Don't proceed deeper into the code if command is direct message
     if (message.channel.type === 'dm') return;
-	
+
     // Mr polisman kmica
     if(settings.musicPrefix.includes(command)) {
         if(String(message.channel.id) !== "635956236730236928") {
@@ -288,9 +298,9 @@ client.on('message', message => {
 			voiceChannel.join().then(connection => {
 				console.log("joined channel");
 				let urlz = [
-					'https://www.youtube.com/watch?v=XY55rmPzd4M', 
-					'https://www.youtube.com/watch?v=ODcPX_gwhdY', 
-					'https://www.youtube.com/watch?v=Y1uqniT07RU', 
+					'https://www.youtube.com/watch?v=XY55rmPzd4M',
+					'https://www.youtube.com/watch?v=ODcPX_gwhdY',
+					'https://www.youtube.com/watch?v=Y1uqniT07RU',
 					'https://www.youtube.com/watch?v=PUcf5Yw75gA'
 				];
 				const stream = ytdl(urlz[randomNumber(urlz.length)], { filter : 'audioonly' });
@@ -302,7 +312,7 @@ client.on('message', message => {
 			}).catch(err => console.log(err));
         }
     }
-	
+
     // Ignore rest of messages
     if (!message.content.startsWith(settings.prefix)) return;
 
