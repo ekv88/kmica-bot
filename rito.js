@@ -94,7 +94,7 @@ const parseSummonerAndGameData = async (gameData) => {
 		summonerIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
 		championName: championName,
 		championId: championId,
-		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName.replace(/ /g,'') + ".png",
+		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championName.replace(/[^0-9a-z]/gi, '') + ".png",
 		historyUrl: "https://matchhistory.eune.leagueoflegends.com/en/#match-details/" + region + "/" + historyUrl[historyUrl.length - 1],
 		win: win,
 		kda: parseInt(getKDA(kills, deaths, assists)),

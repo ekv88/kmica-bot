@@ -171,14 +171,14 @@ client.on('message', message => {
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
 
     // TODO log
-    console.log("Primljena poruka:", command, settings.musicPrefix, message.channel.type);
-	
+    console.log("Message (" + message.channel.type + "):", command, message.content);
 	
 	if(command === settings.prefix + 'lol-interval') {
 		if(!param1 || !param2) {
             message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
             return false;
         }
+		message.channel.send("LOL watcher is enabled :eyes:");
 		riotIntervalValue = param1;
 	}
 	
@@ -193,17 +193,22 @@ client.on('message', message => {
 		let newUser = {
 			summonerName: summonerName,
 			discordName: param1,
+			lastCheck: 0,
 		}
 		riotUserList.push(newUser);
-		console.log(riotUserList);
+		message.channel.send("New user added:\n\nSummoner name: " + summonerName + "\nDiscord user: " + discordName;
 	}
 	
 	/** List users in console */
-	if(command === settings.prefix + 'lol-list-users') console.log(riotUserList)
+	if(command === settings.prefix + 'lol-list-users') {
+		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString();
+		console.log(riotUserList)
+	}
 	
 	/** Stop checking */
 	if(command === settings.prefix + 'lol-stop') {
 		clearInterval(riotIntervalFunction);
+		message.channel.send("LOL watcher is disabled");
 		console.log("\n-----STOPIRANO-----\n");
 	}
 	

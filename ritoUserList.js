@@ -1,7 +1,7 @@
 const userList = [{
 		summonerName: 'ekv',
 		discordName: '<@!143490597804703745>',
-		lastCheck: 1581359155864
+		lastCheck: 1581380434138
 	},{
 		summonerName: 'ProblematicSushi',
 		discordName: '<@!256513486559903744>',
@@ -13,7 +13,7 @@ const userList = [{
 	},{
 		summonerName: 'Kiseli vaskrse',
 		discordName: '<@!263667003452162049>',
-		lastCheck: 1581331246570
+		lastCheck: 1581379333527
 	},{
 		summonerName: 'Empty Spaces',
 		discordName: '<@!289570348389761024>',
@@ -21,7 +21,7 @@ const userList = [{
 	},{
 		summonerName: '12InchesOfPain',
 		discordName: '<@!307115937947975681>',
-		lastCheck: 1581351345279
+		lastCheck: 1581359155864
 	},{
 		summonerName: 'Trypticon10',
 		discordName: '<@!263411859414188042>',
@@ -41,15 +41,23 @@ const userList = [{
 	},{
 		summonerName: 'SyP3',
 		discordName: '<@!394970418299142144>',
-		lastCheck: 1581164198227
+		lastCheck: 1581380434138
 	},{
 		summonerName: 'Cao Desno Jaje',
 		discordName: '<@!567457463046111232>',
-		lastCheck: 1581295856791
+		lastCheck: 1581380434138
 	},{
 		summonerName: 'Cheeky Sneaky',
 		discordName: '<@!139185075240697856>',
-		lastCheck: 1581204243455
+		lastCheck: 1581377701887
+	},{
+		summonerName: 'Cao levo jaje',
+		discordName: '<@!288746781456728065>',
+		lastCheck: 1581380434138
+	},{
+		summonerName: 'Ravmon',
+		discordName: '<@!596826809291505687>',
+		lastCheck: 1581380434138
 }];
 
 module.exports = {
