@@ -17,8 +17,8 @@ const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot } = require('./b
 const { getDoggos, getDog, getCats, getCat } = require('./bot/fun.js');
 
 // Init Google dialogflow session
-const sessionClient = new dialogflow.SessionsClient();
-const sessionPath = sessionClient.sessionPath(settings.GoogleCloudProjectId, 'kmicaBot');
+// const sessionClient = new dialogflow.SessionsClient();
+// const sessionPath = sessionClient.sessionPath(settings.GoogleCloudProjectId, 'kmicaBot');
 
 // Ranks will be a map of set(userId, { mapScheme });
 /*** Scheme:
