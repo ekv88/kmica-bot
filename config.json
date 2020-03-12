@@ -1,6 +1,7 @@
 {
   "token": "",
   "prefix": "!",
-  "musicPrefix": ["-p", "-play", "!play", "!p"],
-  "GoogleCloudProjectId": "newagent-uylfgw"
+  "musicPrefix": ["-p", "-play", "!play", "!p", "!search", "-search"],
+  "GoogleCloudProjectId": "",
+  "ritoKey": ""
 }

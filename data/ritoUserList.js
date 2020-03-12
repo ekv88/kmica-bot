@@ -58,8 +58,12 @@ const userList = [{
 		summonerName: 'Ravmon',
 		discordName: '<@!596826809291505687>',
 		lastCheck: 1581380434138
+	},{
+		summonerName: 'arQoZ',
+		discordName: '<@!325940582058819584>',
+		lastCheck: 0
 }];
 
 module.exports = {
 	importRiotUserList: userList
-}
+};

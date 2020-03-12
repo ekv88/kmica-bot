@@ -2,143 +2,39 @@
 const Discord = require('discord.js');
 const { Client, Attachment } = Discord;
 const settings = require('./config.json');
-const { importRiotUserList } = require('./ritoUserList.js');
-const https = require("https");
 const fs = require('fs');
 const dialogflow = require('dialogflow');
 const ytdl = require('ytdl-core');
-const cahData = require('./cah-data.js');
-const { calucalteTheGame } = require('./rito.js')
+const cahData = require('./data/cah-data.js');
 
+// Bot methods and ulits
+const { randomNumber, randomColor, musicCommandWatcher, joinVoiceChannel, verifyUser } = require('./bot/utils.js');
+// League of Legends bot flamer for bad games :"D
+const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval, getLolWatchUserList, stopLolWatcher, startLolWatcher, instantLolWatcher } = require('./bot/rito.js');
+// Admin parts of bot
+const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot } = require('./bot/admin.js');
+// Doggos and cats man <3
+const { getDoggos, getDog, getCats, getCat } = require('./bot/fun.js');
+
+// Init Google dialogflow session
 const sessionClient = new dialogflow.SessionsClient();
 const sessionPath = sessionClient.sessionPath(settings.GoogleCloudProjectId, 'kmicaBot');
 
-// console.log(settings);
-
-/** Riot value */
-let riotUserList = importRiotUserList;
-let riotIntervalFunction;
-let riotIntervalValue = 1000 * 60 * 10;
-
 // Ranks will be a map of set(userId, { mapScheme });
 /*** Scheme:
- mapScheme = {
-    warningType: enum['SPAM', 'MISSUSE', 'PROFANITY'],
-
-  }
- **/
+	mapScheme = { warningType: enum['SPAM', 'MISSUSE', 'PROFANITY'],}
+**/
 let ranks = new Map();
 let warnings = new Map();
 
-let CAH_GAME_ROOMS = [
-
-];
+let CAH_GAME_ROOMS = [];
 
 // Create an instance of a Discord client
 const client = new Client();
 
-// Global channels - todo
-let channels = [];
-
-/** Pick one of pre coded colors for esthetic purposes **/
-const randomColor = () => {
-    const colors = [8307777, 4310197, 2520036, 6685439, 15794943, 16712355, 15745347, 15784001, 16772866, 14626586];
-    return colors[randomNumber(colors.length - 1)]
-};
-
-/** Random prozivka **/
-const randomProzivka = () => {
-    const prozivka = [
-		'Oduvek me je zanimalo da li si pao s\' neba andjele moj mali i u tom padu zadobio povrede glave koje su ostavile mentalne posledice pa sad nisi sposoban da imas pozitivan skor? ',
-		'Necu da kazem nista. Dacu minut cutanja mozdanim celijama tvojih saigraca, a mozda i njima jer si im provereno dao rak.',
-		'AI treniran na Intelu 4004 bi bolje odigrao od tebe.',
-		'Probaj u opcijama da pogledas "Accessibility settings" posto si ocito retardiran.',
-		'Hajde `rm -rf leagueoflegeneds/` nije ovo za tebe.',
-		'Boban ti je reko da si los',
-		'A da se batalis ti ove igre i da probas nesto na tvom mentalnom nivou, recimo slagalica od 4 dela.',
-		'Nafido si vise cak i od Azre',
-	];
-    return prozivka[randomNumber(prozivka.length)]
-};
-const randomTitleProzivka = (champ) => {
-    const prozivka = [
-		'Hendikepirani ' + champ + ' ponovo napada',
-		'Tuzni ' + champ,
-		'Garage sale ' + champ,
-		'-10 IQ ' + champ,
-	];
-    return prozivka[randomNumber(prozivka.length)]
-};
-
-/** Generate random number - todo extend this to have: from - top option, not just from 0 to N */
-const randomNumber = (num) => Math.floor(Math.random() * num);
-
-/** Send 1 or more cats as single messages using message object */
-const sendCat = (quantity = 1, sendTo, message) =>
-    [...Array(Number(quantity || 1))].map(doggo => {
-        message.channel.send({
-            "embed": {
-                "title": sendTo ? ":cat: | This cat is for " + sendTo : ":cat: | Here is a cat",
-                color: randomColor(),
-                "image": {
-                    "url": "https://cdn.tatsumaki.xyz/cats/" + Math.floor(Math.random() * 473) + ".jpg"
-                }
-            }
-        });
-    });
-
-
-/** Send 1 or more doggoz as single messages using message object */
-const sendDoggo = (quantity = 1, sendTo, message) => {
-    const url = "https://dog.ceo/api/breeds/image/random/" + quantity;
-    https.get(url, res => {
-        res.setEncoding("utf8");
-        let body = "";
-        res.on("data", data => {
-            body += data;
-        });
-        res.on("end", () => {
-            const { message:doggos } = JSON.parse(body);
-            if(doggos) {
-                doggos.map(doggo => {
-                    message.channel.send({
-                        "embed": {
-                            "title": ":dog: | Here you go, a doggo",
-                            color: randomColor(),
-                            "image": {
-                                "url": doggo
-                            }
-                        }
-                    });
-                })
-            }
-        });
-    });
-};
-
-const generateOutputFile = (channel, member) =>
-    fs.createWriteStream(`./recordings/${channel.id}-${member.id}-${Date.now()}.pcm`);
-
 client.on('ready', () => {
     client.user.setActivity('god with gods');
-    client.user.setStatus("Aaaaa");
 
-    //console.log(client.user.debug())
-
-    client.guilds.forEach((guild) => {
-        console.log(" - " + guild.name);
-
-        // List all channels
-        guild.channels.map((channel) => {
-            if(channel.type === 'text') {
-                //client.channels.get(channel.id).send('Elloo maj nibbaz');
-            }
-            console.log(` -- ${channel.name} (${channel.type}) - ${channel.id}`)
-        });
-
-        // @TODO
-        channels = guild.channels.map((name, type, id) => ({name: name, value: "test"}));
-    });
     console.log('Init message');
 });
 
@@ -166,6 +62,7 @@ client.on('message', message => {
     if (message.author.bot) return;
 
     // Extract command and params
+	let { prefix } = settings;
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
@@ -173,342 +70,15 @@ client.on('message', message => {
     // TODO log
     console.log("Message (" + message.channel.type + "):", command, message.content);
 	
-	if(command === settings.prefix + 'lol-interval') {
-		if(!param1 || !param2) {
-            message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
-            return false;
-        }
-		message.channel.send("LOL watcher is enabled :eyes:");
-		riotIntervalValue = param1;
-	}
-	
-	if(command === settings.prefix + 'lol-user-add') {
-		if(!param1) {
-            message.channel.send("Ukucaj: `" + settings.prefix + "lol-user-add` [@DISCORD-TAG] [SUMMONER-NAME]");
-            return false;
-        }
-		let summonerName = message.content.substring(15 + param1.length);
-		let discordName = message.content.substring(5);
-		
-		let newUser = {
-			summonerName: summonerName,
-			discordName: param1,
-			lastCheck: 0,
-		}
-		riotUserList.push(newUser);
-		message.channel.send("New user added:\n\nSummoner name: " + summonerName + "\nDiscord user: " + discordName);
-	}
-	
-	/** List users in console */
-	if(command === settings.prefix + 'lol-list-users') {
-		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString());
-		console.log(riotUserList)
-	}
-	
-	/** Stop checking */
-	if(command === settings.prefix + 'lol-stop') {
-		clearInterval(riotIntervalFunction);
-		message.channel.send("LOL watcher is disabled");
-		console.log("\n-----STOPIRANO-----\n");
-	}
-	
-	/** Stat checking */
-	if(command === settings.prefix + 'lol-start') {
-		riotIntervalFunction = setInterval(() => {
-			console.log("\n----- Tura proveravanja -----\n");
-			riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
-				setTimeout(() => {
-					calucalteTheGame(summonerName, lastCheck).then(game => {
-						console.log("\nCheck.", game);
-						// Spred values
-						const { summonerName: sumName, timestamp, newGame } = game;
-						// Update timestamp
-						riotUserList[key]["lastCheck"] = timestamp;
-						
-						// Return if is not a new game
-						if(newGame === false) return false;
-						
-						let { summonerIcon, championName, championIcon, win, kda, kills, deaths, assists, pentaKills, role, lane, historyUrl } = game;
-						
-						// Dont flame if kda is bigger than 1.3
-						if(kda > 1.30) return false;
-						message.channel.send({
-						  "embed": {
-							"title": randomTitleProzivka(championName),
-							"color": win ? 3986977 : 14033185,
-							"description": "\n" + discordName + "```\n" + randomProzivka() + "```",
-							"footer": {
-							  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
-							  "text": "This was provided by KmicaBot"
-							},
-							"thumbnail": {
-							  "url": championIcon
-							},
-							"author": {
-							  "name": sumName,
-							  "url": historyUrl,
-							  "icon_url": summonerIcon
-							},
-							"fields": [{
-								"name": "Kills",
-								"value": kills,
-								"inline": true
-							  },{
-								"name": "Deaths",
-								"value": deaths,
-								"inline": true
-							  },{
-								"name": "Assists",
-								"value": assists,
-								"inline": true
-							  }]
-						  }
-						});
-					});
-				}, 2000 * key);
-			});
-		}, param1 || riotIntervalValue);		
-    }
-	
 	// Don't proceed deeper into the code if command is direct message
     if (message.channel.type === 'dm') return;
 	
-    // Mr polisman kmica
-    if(settings.musicPrefix.includes(command)) {
-        if(String(message.channel.id) !== "635956236730236928") {
-            message.channel.send({
-                "embed": {
-                    "title": ":police_officer: Wrong channel!",
-                    color: randomColor(),
-                    "description": "Please use <#635956236730236928> channel or i will start bullying you."
-                }
-            });
-			const streamOptions = { seek: 0, volume: 1 };
-			let voiceChannel = message.member.voiceChannel;
-			voiceChannel.join().then(connection => {
-				console.log("joined channel");
-				let urlz = [
-					'https://www.youtube.com/watch?v=XY55rmPzd4M', 
-					'https://www.youtube.com/watch?v=ODcPX_gwhdY', 
-					'https://www.youtube.com/watch?v=Y1uqniT07RU', 
-					'https://www.youtube.com/watch?v=PUcf5Yw75gA'
-				];
-				const stream = ytdl(urlz[randomNumber(urlz.length)], { filter : 'audioonly' });
-				const dispatcher = connection.playStream(stream, streamOptions);
-				dispatcher.on("end", end => {
-					console.log("left channel");
-					voiceChannel.leave();
-				});
-			}).catch(err => console.log(err));
-        }
-    }
-	
+    // Mr Police man
+    musicCommandWatcher(command, prefix, param1, param2, message);
+
     // Ignore rest of messages
     if (!message.content.startsWith(settings.prefix)) return;
-
-    // Very message
-    if(message.content === settings.prefix + 'vMsg') {
-        message.channel.send({
-            "embed": {
-                "title": "Kako da se verifikujem?",
-                "description": "Sve sto je potrebno jeste da ukucas `" + settings.prefix + "verifikuj` i odgovoris tacno na pitanje.",
-                "color": randomColor()
-            }
-        });
-    }
-
-    // Implement a user role reader here as beeter solution
-    if (message.content === settings.prefix + 'info') {
-        //console.log(message.author);
-        if(message.author.username !== 'ekv' && message.author.discriminator !== 6479) {
-            message.channel.send({
-                "embed": {
-                    "description": "Ova opcija je dostupna samo jednom jednom bogu. Gospodinu ekv-u! Ti si neka smradina " + message.author,
-                    "color": randomColor(),
-                    "thumbnail": {
-                        "url": message.author.avatarURL
-                    },
-                    "author": {
-                        "name": "Debug info"
-                    },
-                    "fields": [
-                        {
-                            "name": "???",
-                            "value": "Momce sta to pokusavas?! 🤔"
-                        }
-                    ]
-                }
-            });
-            return false;
-        }
-
-        // Implement logging
-        message.channel.send({
-            "embed": {
-                "description": "Izvolite gospodine sve informacije do sad:",
-                "color": randomColor(),
-                "thumbnail": {
-                    "url": message.author.avatarURL
-                },
-                "author": {
-                    "name": "Usage info"
-                },
-                "fields": [
-                    {
-                        "name": "!doggo",
-                        "value": "Korisceno do sad: x"
-                    },
-                    {
-                        "name": "!cats",
-                        "value": "Korisceno do sad: x"
-                    },
-                ]
-            }
-        });
-    }
-
-    // Ping - pong
-    if (message.content === settings.prefix + 'x') {
-        message.channel.send({
-            "embed": {
-                description: channels.map((channel) => { return channel.name.name + " - " + channel.name.id + "\n" }).toString(),
-                color: randomColor(),
-                "author": {
-                    "name": "Init msg log"
-                }
-            }
-        });
-    }
-
-    if(command === settings.prefix + "doggos") {
-        if(!param1) {
-            message.channel.send("Tell us traveler, how many doggos? exp: !doggos 3");
-            return false;
-        }
-        sendDoggo(param1, param2, message);
-    }
-
-    /** Alias comands for !dog and !doggo **/
-    if(command === settings.prefix + "dog" || command === settings.prefix + "doggo")
-        sendDoggo(param1, param2, message);
-
-    if(command === settings.prefix + "cats") {
-        if(!param1) {
-            message.channel.send("Tell us traveler, how many cats? exp: !cats 3");
-            return false;
-        }
-        sendCat(param1, param2, message);
-    }
-
-    /** Alias comands for !cat **/
-    if(command === settings.prefix + "cat") {
-        sendCat(param1, param2, message);
-        console.log("Cat man")
-    }
-
-    if(command === settings.prefix + "reci") {
-        if(!param1) {
-            message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
-            return false;
-        }
-        console.log("Kreno sam da kazem");
-
-        client.guilds.forEach((guild) => {
-            guild.channels.map((channel) => {
-                if(channel.type === 'text') {
-                    client.channels.get(channel.id).send(message.content.substring(6));
-                    //console.log(` -- ${channel.name} (${channel.type}) - ${channel.id}`)
-                }
-            });
-        });
-    }
-
-    if(command === settings.prefix + "verifikuj") {
-        let verfRoles = ['651159546693156865', '589946410871554049', '589873068491669536', '589872418353315850', '589872090606338062', '589869419380080700'];
-        if(message.member.roles.some(role => verfRoles.includes(role.id)) ) {
-            message.channel.send({
-                "embed": {
-                    "title": "Ne smaraj me",
-                    color: 16197916,
-                    "description": "Noobe botovski vec imas rolu, ne smaraj me"
-                }
-            });
-        } else {
-            let acceptedToServer = false
-            message.channel.send({
-                "embed": {
-                    "title": "Odgovori na pitanje:",
-                    color: randomColor(),
-                    "description": "Dimenzija mog penisa je?\nOdgovori brojem, misli se na centimetre, imas 30 sekundi."
-                }
-            }).then(msg => msg.delete(30000));
-            const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 32000, max: 6 });
-            collector.on('collect', msg => {
-                const answer = parseInt(msg.content)
-                if (answer <= 5) {
-                    msg.react('😡');
-                    msg.reply("Evo tebi jedan ban za nepostovanje.").then(msg => msg.delete(15000));
-                    if (msg.guild.member(msg.author).bannable) {
-						// Ban user method
-						message.guild.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
-							.then(user => console.log('Banned ' + msg.author.username || msg.author.id || user + 'from ' + message.guild))
-							.catch(console.error);
-                    }
-                }
-                if (answer < 15 && answer > 5) {
-                    msg.react('😡');
-                    msg.reply("Oces batine mozda?").then(msg => msg.delete(15000));
-                    // msg.react('😄');
-                }
-                if (answer < 25 && answer > 15) {
-                    msg.react('😡');
-                    msg.reply("A da ja tebe banujem umesto da verifikujem?").then(msg => msg.delete(15000));
-                }
-                if (answer < 35 && answer > 25) {
-                    msg.react('😡');
-                    msg.reply("Pa zar mislis da je samo natprosecno velik?").then(msg => msg.delete(15000));
-                }
-                if (answer > 35) {
-                    acceptedToServer = true;
-                    msg.react('😄');
-                    if(answer > 60) msg.react('🍆');
-                    // 651159546693156865
-                    let verRole = msg.guild.roles.find(role => role.id === "651159546693156865");
-                    msg.member.addRole(verRole);
-                    msg.reply("Malo veci, al' prihvaticu odgovor.\nVelkam tu d dzangl.").then(msg => msg.delete(15000));
-                }
-            });
-            collector.on('end', (msg, response) => {
-                if(response === 'limit' && !acceptedToServer) {
-                    message.channel.send({
-                        "embed": {
-                            color: 16197916,
-                            "description": "Previse pokusaja mlado momce.\nGoni se sa servera."
-                        }
-                    }).then(msg => msg.delete(10000));
-                }
-                if(response === 'time' && !acceptedToServer) {
-                    message.channel.send({
-                        "embed": {
-                            color: 16197916,
-                            "description": "Sine nemam ja ceo dan tebe da cekam.\nGoni se sa servera."
-                        }
-                    }).then(msg => msg.delete(10000));
-                }
-                console.log(msg, response, message.member.roles)
-            });
-        }
-    }
-
-    // Reload command for ez dev
-    if(command === settings.prefix + "reboot") {
-        console.clear();
-        client.destroy();
-        client.login(settings.token);
-        message.channel.send("Reloaded, gg ez");
-        return;
-    }
-
+ 
     // Change prefix
     if(command === settings.prefix + "newPrefix") {
         if(!param1) {
@@ -531,144 +101,76 @@ client.on('message', message => {
         });
     }
 
-    // Game par of code *This will be sad*
-    if(command === settings.prefix + 'cah') {
-        let gameId = null;
-        if(!param1) {
-            message.reply("E nubarop jedna, kucaj `" + settings.prefix + "cah help` ako oces vise informacija");
-            return false;
-        }
-        switch (param1) {
-            case "help":
-                message.channel.send({
-                    "embed": {
-                        "title": "Cards Against Humanity",
-                        color: 1,
-                        "description": "E ovako nubaro moja ovo su sve komande koje mozes koristiti:",
-                        "thumbnail": {
-                            "url": "https://www.menkind.co.uk/media/catalog/product/cache/18d539bb2b3719975e9326e6edaea759/c/a/cards_against_humanity_61032_2__1.jpg"
-                        },
-                        "fields": [
-                            {
-                                "name": settings.prefix + "cah help",
-                                "value": "Pomoc ova koju upravo citas"
-                            },{
-                                "name": settings.prefix + "cah rooms",
-                                "value": "Lista trenutnih soba"
-                            },{
-                                "name": settings.prefix + "cah create",
-                                "value": "Napravi novu sobu"
-                            },{
-                                "name": settings.prefix + "cah join [room-id]",
-                                "value": "Pridruzi se sobi koja trenutno ceka igrace"
-                            }
-                        ]
-                    }
-                });
-                break;
-            case "create":
-                message.reply("Igra je uspesno kreirana sa ID-om:" + 1);
-                break;
-            default:
-                message.reply("E nubarop jedna, kucaj `" + settings.prefix + "cah help` ako oces vise informacija");
-                break;
-        }
+	// ---------------------------
+	// fun.js - PART OF BOT
+	
+	// Get one dog image
+	getDog(command, prefix, param1, param2, message);
+	
+	// Get bunch of doggo images
+	getDoggos(command, prefix, param1, param2, message);
+	
+	// Get one cat image
+	getCat(command, prefix, param1, param2, message);
+	
+	// Get bunch of kittens images
+	getCats(command, prefix, param1, param2, message);
+
+
+    // ---------------------------
+    // utils.js - PART OF BOT
+
+    // Get bot to voice channel
+    joinVoiceChannel(command, prefix, param1, param2, message);
+
+    // Verify new user
+    verifyUser(command, prefix, param1, param2, message);
+
+	// ---------------------------
+	// rito.js - PART OF BOT
+
+    // Add new user to league of legends watch list
+    addUserToLolWatchList(command, prefix, param1, param2, message);
+
+    // Delete user from league of legends watch list
+    deleteUserFromLolWatchList(command, prefix, param1, param2, message);
+
+    // Set league of legends watcher refresh interval in MS
+    setLolWatcherInterval(command, prefix, param1, param2, message);
+
+    // Print list of all user registered in watcher list
+    getLolWatchUserList(command, prefix, param1, param2, message);
+
+    // Sto league of legend watcher
+    stopLolWatcher(command, prefix, param1, param2, message);
+
+    // Start league of legends watcher
+    startLolWatcher(command, prefix, param1, param2, message);
+
+    // Refresh league of legend watcher right now - Use this for tests
+    instantLolWatcher(command, prefix, param1, param2, message);
+
+    // ---------------------------
+    // admin.js - PART OF BOT
+
+    // If member has one of admin/mod id roles
+    if(message.member.roles.some(role => ["589872090606338062", "589872418353315850"].includes(role.id))) {
+        // Return bot debug - @TODO: Next milestone
+        botDebugStats(command, prefix, param1, param2, message);
+
+        // Send text message to every possible channel
+        sayToAllChannels(command, prefix, param1, param2, message, client);
+
+        // Restart bot
+        rebootBot(command, prefix, param1, param2, message, client);
+
+        // Shutdown bot
+        shutdownBot(command, prefix, param1, param2, message, client);
     }
 
-    // Game par of code *This will be sad*
-    if(command === settings.prefix + 'meme') {
-        let gameId = null;
-        if(!param1) {
-            message.reply("da naucis kako se koristi kucaj: `" + settings.prefix + "meme help`");
-            return false;
-        }
-        switch (param1) {
-            case "help":
-                message.channel.send({
-                    "embed": {
-                        "title": "MEMEz",
-                        color: 6750147,
-                        "description": "U sustini verovatno nikada necu zavristi ovo do kraja, ali fora je da lako daje mimove",
-                        "thumbnail": {
-                            "url": "https://dailystormer.name/wp-content/uploads/2017/03/prophet-of-kek.jpg"
-                        },
-                        "fields": [
-                            {
-                                "name": settings.prefix + "meme top",
-                                "value": "Listu top 100 mimova"
-                            },{
-                                "name": settings.prefix + "meme search 'ime'",
-                                "value": "Daje ti template za taj meme"
-                            },{
-                                "name": settings.prefix + "meme create [id]",
-                                "value": "Generise link sa templejtom"
-                            },{
-                                "name": settings.prefix + "meme random",
-                                "value": "Baci random meme"
-                            }
-                        ]
-                    }
-                });
-                break;
-            case "create":
-                message.reply("Igra je uspesno kreirana sa ID-om:" + 1);
-                break;
-            default:
-                message.reply("E nubarop jedna, kucaj `" + settings.prefix + "cah help` ako oces vise informacija");
-                break;
-        }
-    }
-    // Google dialogflow
-    if (command === settings.prefix + "t") {
-        if(!param1) return false;
 
-        const dialogflowRequest = {
-            session: sessionPath,
-            queryInput: {
-                text: {
-                    text: message.content.substring(3),
-                    languageCode: 'en-US'
-                }
-            }
-        };
-        sessionClient.detectIntent(dialogflowRequest).then(responses => {
-            message.channel.send(responses[0].queryResult.fulfillmentText);
-        }).catch(error => {
-            console.log(error)
-        });
-    }
-
-    // Djido mova - Voice todo
-    if (command === settings.prefix + "odi") {
-        var VC = message.member.voiceChannel;
-        // Check if is connected to voice channel
-        if (!VC) return message.reply("Brah, not in voice brah");
-
-        VC.join().then(connection => {
-            const dispatcher = connection.playFile('./boris-test.mp3');
-
-            connection.on('speaking', (user, speaking) => {
-                if (speaking) {
-                    const receiver = connection.createReceiver();
-                    message.channel.send(`Sta opet kenjas ${user}?`);
-                    // this creates a 16-bit signed PCM, stereo 48KHz PCM stream.
-                    const audioStream = receiver.createPCMStream(user);
-                    // create an output stream so we can dump our data in a file
-                    const outputStream = generateOutputFile(VC, user);
-                    // pipe our audio data into the file stream
-                    audioStream.pipe(outputStream);
-                    outputStream.on("data", console.log);
-                    // when the stream ends (the user stopped talking) tell the user
-                    audioStream.on('end', () => {
-                        message.channel.send(`Smaras ${user}, odoh.`);
-                    });
-                }
-            });
-            dispatcher.on("end", end => {
-                VC.leave()
-            });
-        })
-    }
+    // ---------------------------
+    // games.js - PART OF BOT
 });
 
 // Login on start
