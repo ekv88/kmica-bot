@@ -39,7 +39,7 @@ const sayToAllChannels = (command, prefix, param1, param2, message, client) => {
 		
         message.client.guilds.forEach((guild) => {
             guild.channels.map(channel => {
-				if(channel.type === 'text') client.channels.get(channel.id).send(content.substring(6))
+				if(channel.type === 'text') client.channels.get(channel.id).send(message.content.substring(prefix.length + 3))
 			});
         });
     }

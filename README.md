@@ -1,9 +1,9 @@
 # Kmica 👑 - Discord bot
-*Hi! Kmica is Discord bot made specifically for one server, but with a little editing or time I could possible make it more flexible to use on other servers.*
+*Hi! **Kmica** is Discord bot made specifically for one server, but with a little editing you can tailor it to suit yourself or wait because overtime I might make it more flexible so it can be used on other servers as well.*
 
-## Commands
+## Commands 🕹
 
-#### Common
+#### Admin 😎
 `!reboot` - Reboot bot
 
 `!shutdown` - Shutdown bot
@@ -26,11 +26,13 @@
 
 `!lol-user-delete [@DISCORD-TAG OR SUMMONER-NAME]` - Remove user from watch list
 
-#### Doggos 🐶 & Cats 🐱
+#### Doggos 🐶
 
 `!dog` or `!doggo` - Bot will send image of a dog
 
 `!doggos [QUANTITY]` - Bot will send multiple images of dogs
+
+#### Cats 🐱
 
 `!cat` - Bot will send image of a cat
 
