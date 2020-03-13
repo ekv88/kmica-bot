@@ -34,7 +34,7 @@ const botDebugStats = (command, prefix, param1, param2, message) => {
 };
 	
 const sayToAllChannels = (command, prefix, param1, param2, message, client) => {
-	if(command === prefix + "reci") {
+	if(command === prefix + "say") {
         if(!param1) return message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
 		
         message.client.guilds.forEach((guild) => {
