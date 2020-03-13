@@ -54,8 +54,8 @@ const getGameData = async (gameId) => {
 };
 
 // Calculate KDA (Kills, Deaths, Assists) = K + A / D
-const getKDA = (kills = 0, deaths = 0, assists = 0) => 
-	((parseInt(kills) + parseInt(assists)) / deaths).toFixed(2);
+const getKDA = (kills, deaths, assists) =>
+	parseInt(((parseInt(kills) + parseInt(assists)) / parseInt(deaths == 0 ? 1 : deaths)).toFixed(2));
 
 // Combine all methods to return spcific user gamme stats data
 const getLastGameStats = async (summonerName, lastCheck) => {
