@@ -55,7 +55,7 @@ const getGameData = async (gameId) => {
 
 // Calculate KDA (Kills, Deaths, Assists) = K + A / D
 const getKDA = (kills, deaths, assists) =>
-	parseInt(((parseInt(kills) + parseInt(assists)) / parseInt(deaths == 0 ? 1 : deaths)).toFixed(2));
+	((parseInt(kills) + parseInt(assists)) / parseInt(deaths == 0 ? 1 : deaths)).toFixed(2);
 
 // Combine all methods to return spcific user gamme stats data
 const getLastGameStats = async (summonerName, lastCheck) => {
@@ -103,7 +103,7 @@ const parseSummonerAndGameData = async (gameData) => {
 		championIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/champion/" + championImage,
 		historyUrl: "https://matchhistory.eune.leagueoflegends.com/en/#match-details/" + region + "/" + historyUrl[historyUrl.length - 1],
 		win: win,
-		kda: parseInt(getKDA(kills, deaths, assists)),
+		kda: getKDA(kills, deaths, assists),
 		kills: kills,
 		deaths: deaths,
 		assists: assists,
