@@ -16,14 +16,11 @@
   "author": "ekv",
   "license": "MIT",
   "dependencies": {
-    "dblapi.js": "^2.3.0",
-    "dialogflow": "^0.7.0",
-    "discord.js": "^11.5.1",
+    "dblapi.js": "^2.4.0",
+    "dialogflow": "^1.2.0",
+    "discord.js": "^12.0.2",
     "node-fetch": "^2.6.0",
-    "node-opus": "^0.3.3",
-    "opusscript": "0.0.7",
-    "rimraf": "^2.6.1",
-    "ytdl-core": "^1.0.7"
+    "ytdl-core": "^2.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

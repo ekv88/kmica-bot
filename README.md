@@ -1,6 +1,7 @@
 # Kmica 👑 - Discord bot
 *Hi! **Kmica** is Discord bot made specifically for one server, but with a little editing you can tailor it to suit yourself or wait because overtime I might make it more flexible so it can be used on other servers as well.*
 
+[![dependencies Status](https://discordapp.com/api/guilds/563439453125738506/embed.png)](https://discord.gg/4n9YTEG)
 [![dependencies Status](https://img.shields.io/circleci/build/github/ekv88/kmica-bot/master.svg)](https://circleci.com/gh/ekv88/kmica-bot)
 [![dependencies Status](https://david-dm.org/ekv88/kmica-bot/master/status.svg)](https://david-dm.org/ekv88/kmica-bot/master)
 [![devDependencies Status](https://david-dm.org/ekv88/kmica-bot/master/dev-status.svg)](https://david-dm.org/ekv88/kmica-bot/master?type=dev)
