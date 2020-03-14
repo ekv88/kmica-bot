@@ -176,5 +176,6 @@ client.on('message', message => {
 // Login on start
 client.login(process.env.CLIENT_TOKEN || settings.token).catch(error => {
     // Avoid crash the app with message
-    console.warn('Token is missing!');
+    console.warn('Token is missing!', error);
+    process.exit(0);
 });
