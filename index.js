@@ -12,7 +12,7 @@ const { randomNumber, randomColor, musicCommandWatcher, joinVoiceChannel, verify
 // League of Legends bot flamer for bad games :"D
 const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval, getLolWatchUserList, stopLolWatcher, startLolWatcher, instantLolWatcher } = require('./bot/rito.js');
 // Admin parts of bot
-const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot } = require('./bot/admin.js');
+const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot, sendToGulag } = require('./bot/admin.js');
 // Doggos and cats man <3
 const { getDoggos, getDog, getCats, getCat } = require('./bot/fun.js');
 
@@ -153,8 +153,10 @@ client.on('message', message => {
     // ---------------------------
     // admin.js - PART OF BOT
 
+    // message.member.roles.cache.some(role => console.log(role.id, role.name));
+
     // If member has one of admin/mod id roles
-    if(message.member.roles.some(role => ["589872090606338062", "589872418353315850"].includes(role.id))) {
+    if(message.member.roles.cache.some(role => ["589872090606338062", "589872418353315850"].includes(role.id))) {
         // Return bot debug - @TODO: Next milestone
         botDebugStats(command, prefix, param1, param2, message);
 
@@ -166,6 +168,9 @@ client.on('message', message => {
 
         // Shutdown bot
         shutdownBot(command, prefix, param1, param2, message, client);
+
+        // Shutdown bot
+        sendToGulag(command, prefix, param1, param2, message, client);
     }
 
 

@@ -1,5 +1,5 @@
 const settings = require('../config.json');
-const { randomColor } = require('./utils.js');
+const { randomColor, randomNumber } = require('./utils.js');
 
 // Implement a user role reader here as beeter solution
 const botDebugStats = (command, prefix, param1, param2, message) => {
@@ -65,10 +65,37 @@ const shutdownBot = (command, prefix, param1, param2, message, client) => {
     }
 };
 
+const sendToGulag = async (command, prefix, param1, param2, message, client) => {
+    if(command === prefix + "gulag") {
+        if(!param1) return message.channel.send("Comrad, please tell me what users you want me to move in gulag?");
+        let targetUser = message.members.cache.find(member => member.id == message.mentions.users.first().id);
+        let channelName = 'Gulag-' + randomNumber(1000);
+
+        await message.guild.channels.create(channelName, { type: 'voice', reason: 'Dont grab 🧼' })
+            .catch((error => console.log(error)));
+
+        //message.guild.channels.cache.find(channel => channel.name === channelName).delete();
+
+        console.log(targetUser)
+        //await targetUser.voice.setChannel(message.guild.channels.cache.find(r => r.name === channelName))
+
+
+        console.log(targetUser)
+        userList.map(async user => {
+            // user.
+            console.log(user, "aaaaaaaaaaaaaaaaa", channel);
+            //await user.client.voice.setChannel(message.guild.channels.find(r => r.name === 'Gulag comrad'));
+        });
+
+        message.channel.send("Welcome to Gulag comrad. You are here to stay.");
+    }
+};
+
 // Export functions for discord part
 module.exports = {
 	botDebugStats: botDebugStats,
 	sayToAllChannels: sayToAllChannels,
 	rebootBot: rebootBot,
 	shutdownBot: shutdownBot,
+    sendToGulag: sendToGulag,
 };

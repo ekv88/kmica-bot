@@ -124,7 +124,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
 	if(command === prefix + "verifikuj" || command === prefix + "verify") {
         let verfRoles = ['651159546693156865', '589946410871554049', '589873068491669536', '589872418353315850', '589872090606338062', '589869419380080700'];
 		
-        if(message.member.roles.some(role => verfRoles.includes(role.id)) ) {
+        if(message.member.roles.cache.some(role => verfRoles.includes(role.id)) ) {
             message.channel.send({
                 "embed": {
                     "title": "Ne smaraj me",
@@ -150,7 +150,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                     msg.reply("Evo tebi jedan ban za nepostovanje.").then(msg => msg.delete(15000));
                     if (msg.guild.member(msg.author).bannable) {
 						// Ban user method
-						guild.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
+                        guild.members.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
 							.then(user => console.log('Banned ' + msg.author.username || msg.author.id || user + 'from ' + guild))
 								.catch(err => console.log(error));
                     }
