@@ -142,7 +142,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                 }
             }).then(msg => msg.delete(30000));
 			
-            const collector = new Discord.MessageCollector(channel, m => m.author.id === author.id, { time: 32000, max: 6 });
+            const collector = new Discord.MessageCollector(message.channel, m => m.author.id === message.author.id, { time: 32000, max: 6 });
             collector.on('collect', msg => {
                 const answer = parseInt(msg.content);
                 if (answer <= 5) {
@@ -173,8 +173,8 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                     msg.react('😄');
                     if(answer > 60) msg.react('🍆');
                     // 651159546693156865
-                    let verRole = msg.guild.roles.find(role => role.id === "651159546693156865");
-                    msg.member.addRole(verRole);
+                    let verRole = msg.guild.roles.cache.find(role => role.id === "651159546693156865");
+                    msg.member.roles.add(verRole);
                     msg.reply("Malo veci, al' prihvaticu odgovor.\nVelkam tu d dzangl.").then(msg => msg.delete(15000));
                 }
             });
@@ -195,7 +195,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                         }
                     }).then(msg => msg.delete(10000));
                 }
-                console.log(msg, response, message.member.roles)
+                //console.log(msg, response, message.member.roles)
             });
         }
     }
