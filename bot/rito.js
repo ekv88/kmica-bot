@@ -186,7 +186,7 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 };
 
 const parseTftGameData = async (gameData) => {
-	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, total_damage_to_players, traits } = gameData;
+	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, total_damage_to_players, traits, game_datetime } = gameData;
 
 	console.log(summonerName + " - TFT check")
 
@@ -204,6 +204,7 @@ const parseTftGameData = async (gameData) => {
 		placement: placement,
 		eliminated: players_eliminated,
 		totalDmg: total_damage_to_players,
+		timestamp: game_datetime,
 		mainTrait: sortTraits ? traitName(sortTraits[0].name) : null,
 		traits: sortTraits ?
 			sortTraits.filter(trait => tft3Names[traitName(trait.name)] !== undefined)
@@ -217,13 +218,13 @@ const parseTftGameData = async (gameData) => {
 }
 
 // Fuse summoner data with game data and assets
-const calculateTheTftGame = async(summonerName, lastCheck) => {
+const calculateTheTftGame = async(summonerName, tftLastCheck) => {
 	if(!gameVersion) {
 		getLastGameVersion()
 			.then(async version => gameVersion = version)
 				.catch(error => console.log(error));
 	}
-	return await getLastTftGameStats(summonerName, lastCheck)
+	return await getLastTftGameStats(summonerName, tftLastCheck)
 		.then(async gameData => parseTftGameData(gameData))
 			.catch(error => console.error(error));
 };
@@ -277,8 +278,8 @@ const tftTraitMessages = (trait) => {
 		"void": ['You hentai weirdo.', 'Msg2'],
 		"spacepirate": ['Msg1', 'Msg2'],
 		"darkstar": ['Msg1', 'Msg2'],
-		"protector": ['Msg1', 'Msg2'],
-		"celestial": ['Msg1', 'Msg2'],
+		"protector": ['Pa i nije ti neka protekcija', 'Sto krades ekv-u build?'],
+		"celestial": ['Sto krades ekv-u build?', 'Msg2'],
 		"sniper": ['Msg1', 'Msg2'],
 		"starguardian": ['Msg1', 'Msg2'],
 		"vanguard": ['Leona nema muda.', 'He protec but he dont attac','Msg2'],
@@ -299,15 +300,15 @@ const tftTraitMessages = (trait) => {
 
 // We have to separate this method for reusing
 const checkAllTftGamesAndSendMessage = (message) => {
-	riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
+	riotUserList.map(({summonerName, discordName, tftLastCheck}, key) => {
 		// if(key > 0) return false;
 		setTimeout(() => {
-			calculateTheTftGame(summonerName, lastCheck).then(game => {
+			calculateTheTftGame(summonerName, tftLastCheck).then(game => {
 				// console.log("\nCheck.", game);
 				// Spred values
 				const { summonerName: sumName, timestamp, newGame, summonerIcon, traits, placement, mainTrait } = game;
 				// Update timestamp
-				riotUserList[key]["lastCheck"] = timestamp;
+				riotUserList[key]["tftLastCheck"] = timestamp;
 
 				// Return if is not a new game
 				if(newGame === false) return false;
@@ -318,7 +319,7 @@ const checkAllTftGamesAndSendMessage = (message) => {
 					"embed": {
 						"title": tftPlacementTitles(placement),
 						"color": randomColor(),
-						"description": "Zavrsio na **" + placement + ".** mestu, " + discordName + "\n```" + tftTraitMessages(mainTrait) + "```" + mainTrait,
+						"description": "Zavrsio na **" + placement + ".** mestu, " + discordName + "\n```" + tftTraitMessages(mainTrait) + "```",
 						"footer": {
 							"icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
 							"text": "This was provided by Kmica Bot"
@@ -449,7 +450,9 @@ const addUserToLolWatchList = (command, prefix, param1, param2, message) => {
 			discordName: param1,
 			lastCheck: 0,
 		};
-		
+
+		console.log(newUser);
+
 		// Push user object
 		riotUserList.push(newUser);
 		
@@ -482,7 +485,7 @@ const setLolWatcherInterval = (command, prefix, param1, param2, message) => {
 const getLolWatchUserList = (command, prefix, param1, param2, message) => {
 	if(command === prefix + 'lol-user-list') {
 		// Send user list to channel
-		message.channel.send("User list:\n\n" + riotUserList.map((user) => { return user.summonerName + " - " + user.discordName + "\n" }).toString().replace(/,/g,''));
+		message.channel.send("User list:\n\n" + riotUserList.map((user, key) => { return parseInt(key + 1) + ". " + user.summonerName + " - " + user.discordName + "\n" }).toString().replace(/,/g,''));
 		// Console log them
 		console.log(riotUserList)
 	}

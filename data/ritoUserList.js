@@ -93,6 +93,12 @@ const userList = [{
 		discordName: '<@!654484804057956353>',
 		lastCheck: 1581380434138,
 		tftLastCheck: 1581380434138
+	},
+	{
+		summonerName: 'ThrashBL',
+		discordName: '<@!445202410143612928>',
+		lastCheck: 1581380434138,
+		tftLastCheck: 1581380434138
 	}
 ];
 
