@@ -1,4 +1,5 @@
 const Discord = require('discord.js');
+const ytdl = require('ytdl-core');
 const settings = require('../config.json');
 
 // Generate random number
@@ -61,7 +62,7 @@ const musicCommandWatcher = (command, prefix, param1, param2, message) => {
                     "description": "Please use <#635956236730236928> channel or i will start bullying you."
                 }
             });
-			let VC = message.member.voiceChannel;
+			let VC = message.member.voice.channel;
 			// Check if is connected to voice channel
 			if (!VC) return;
 			const streamOptions = { seek: 0, volume: 1 };
@@ -74,7 +75,7 @@ const musicCommandWatcher = (command, prefix, param1, param2, message) => {
 					'https://www.youtube.com/watch?v=PUcf5Yw75gA'
 				];
 				const stream = ytdl(urlz[randomNumber(urlz.length)], { filter : 'audioonly' });
-				const dispatcher = connection.playStream(stream, streamOptions);
+				const dispatcher = connection.play(stream, streamOptions);
 				dispatcher.on("end", end => {
 					// console.log("left channel");
 					VC.leave();
@@ -150,7 +151,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                     msg.reply("Evo tebi jedan ban za nepostovanje.").then(msg => msg.delete(15000));
                     if (msg.guild.member(msg.author).bannable) {
 						// Ban user method
-                        guild.members.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
+                        msg.guild.members.ban(msg.author, { days: 1, reason: 'Prozivaj kod kuce tako' })
 							.then(user => console.log('Banned ' + msg.author.username || msg.author.id || user + 'from ' + guild))
 								.catch(err => console.log(error));
                     }
@@ -175,6 +176,7 @@ const verifyUser = (command, prefix, param1, param2, message) => {
                     // 651159546693156865
                     let verRole = msg.guild.roles.cache.find(role => role.id === "651159546693156865");
                     msg.member.roles.add(verRole);
+
                     msg.reply("Malo veci, al' prihvaticu odgovor.\nVelkam tu d dzangl.").then(msg => msg.delete(15000));
                 }
             });

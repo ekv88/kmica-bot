@@ -37,8 +37,8 @@ const sayToAllChannels = (command, prefix, param1, param2, message, client) => {
 	if(command === prefix + "say") {
         if(!param1) return message.channel.send("Da li ti je mama rekla gola komanda bez parama poziva ne exit? Reci!");
 		
-        message.client.guilds.forEach((guild) => {
-            guild.channels.map(channel => {
+        message.client.guilds.cache.map((guild) => {
+            guild.channels.cache.map(channel => {
 				if(channel.type === 'text') client.channels.get(channel.id).send(message.content.substring(prefix.length + 3))
 			});
         });
@@ -68,26 +68,23 @@ const shutdownBot = (command, prefix, param1, param2, message, client) => {
 const sendToGulag = async (command, prefix, param1, param2, message, client) => {
     if(command === prefix + "gulag") {
         if(!param1) return message.channel.send("Comrad, please tell me what users you want me to move in gulag?");
-        let targetUser = message.members.cache.find(member => member.id == message.mentions.users.first().id);
+        // console.log(message.channel.members.)
+        let targetUser = message.channel.members.find(member => member.id == message.mentions.users.first().id);
         let channelName = 'Gulag-' + randomNumber(1000);
 
-        await message.guild.channels.create(channelName, { type: 'voice', reason: 'Dont grab 🧼' })
+        const gulagChannel = await message.guild.channels.create(channelName, { type: 'voice', reason: 'Dont grab 🧼' })
             .catch((error => console.log(error)));
 
-        //message.guild.channels.cache.find(channel => channel.name === channelName).delete();
+        console.log(targetUser.guild, targetUser.guild.members, targetUser.guild.channels, targetUser.guild.presences)
+        // .setVoiceChannel(gulagChannel)
 
-        console.log(targetUser)
-        //await targetUser.voice.setChannel(message.guild.channels.cache.find(r => r.name === channelName))
+        // userList.map(async user => {
+        //     // user.
+        //     console.log(user, "aaaaaaaaaaaaaaaaa", channel);
+        //     //await user.client.voice.setChannel(message.guild.channels.find(r => r.name === 'Gulag comrad'));
+        // });
 
-
-        console.log(targetUser)
-        userList.map(async user => {
-            // user.
-            console.log(user, "aaaaaaaaaaaaaaaaa", channel);
-            //await user.client.voice.setChannel(message.guild.channels.find(r => r.name === 'Gulag comrad'));
-        });
-
-        message.channel.send("Welcome to Gulag comrad. You are here to stay.");
+        // message.channel.send("Welcome to Gulag comrad. You are here to stay.");
     }
 };
 

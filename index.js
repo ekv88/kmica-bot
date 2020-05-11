@@ -3,14 +3,13 @@ const Discord = require('discord.js');
 const { Client, Attachment } = Discord;
 const settings = require('./config.json');
 const fs = require('fs');
-const dialogflow = require('dialogflow');
-const ytdl = require('ytdl-core');
+// const dialogflow = require('dialogflow');
 const cahData = require('./data/cah-data.js');
 
 // Bot methods and ulits
 const { randomNumber, randomColor, musicCommandWatcher, joinVoiceChannel, verifyUser } = require('./bot/utils.js');
 // League of Legends bot flamer for bad games :"D
-const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval, getLolWatchUserList, stopLolWatcher, startLolWatcher, instantLolWatcher } = require('./bot/rito.js');
+const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval, getLolWatchUserList, stopLolWatcher, startLolWatcher, instantLolWatcher, setTftWatcherInterval, startTftWatcher, stopTftWatcher, instantTftWatcher } = require('./bot/rito.js');
 // Admin parts of bot
 const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot, sendToGulag } = require('./bot/admin.js');
 // Doggos and cats man <3
@@ -33,7 +32,17 @@ let CAH_GAME_ROOMS = [];
 const client = new Client();
 
 client.on('ready', () => {
-    client.user.setActivity('god with gods');
+    // client.user.setActivity('god with gods');
+    // client.user.setActivity("gods dying", { type: "WATCHING" })
+    client.user.setActivity("gods dying", { type: "WATCHING" })
+    // client.user.setActivity("pornhub.com", { type: "WATCHING", url: "https://www.pornhub.com" })
+    // client.user.setPresence({
+    //     game: {
+    //         name: 'gods dying',
+    //         type: 'WATCHING'
+    //     },
+    //     status: 'idle'
+    // });
 
     console.log('Init message');
 });
@@ -150,6 +159,18 @@ client.on('message', message => {
     // Refresh league of legend watcher right now - Use this for tests
     instantLolWatcher(command, prefix, param1, param2, message);
 
+    // Set TFT watcher refresh interval in MS
+    setTftWatcherInterval(command, prefix, param1, param2, message);
+
+    // Sto TFT watcher
+    startTftWatcher(command, prefix, param1, param2, message);
+
+    // Start TFT watcher
+    stopTftWatcher(command, prefix, param1, param2, message);
+
+    // Refresh TFT watcher right now - Use this for tests
+    instantTftWatcher(command, prefix, param1, param2, message);
+
     // ---------------------------
     // admin.js - PART OF BOT
 
@@ -173,6 +194,23 @@ client.on('message', message => {
         sendToGulag(command, prefix, param1, param2, message, client);
     }
 
+
+    // Change prefix
+    if(command === settings.prefix + "lfg") {
+        message.channel.send({
+            "embed": {
+                "title": "Shall we play a game?",
+                color: randomColor(),
+                "description": "React to game you want to play and I will bother other players for you. Because I can."
+            }
+        }).then(msg => {
+            let games = client.emojis.cache.map(emoji => {
+                if(['lol', 'valorant', 'csgo', 'minecraft', 'gta5', 'apex', 'paladins', 'wow'].includes(emoji.name)) {
+                    msg.react(emoji.id)
+                }
+            });
+        });
+    }
 
     // ---------------------------
     // games.js - PART OF BOT

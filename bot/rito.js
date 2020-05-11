@@ -2,24 +2,31 @@ const settings = require('../config.json');
 const https = require("https");
 const fetch = require("node-fetch");
 const { importRiotUserList } = require('../data/ritoUserList.js');
-const { randomFlameMsg, randomFlameTitle } = require('./utils.js');
+const { randomFlameMsg, randomFlameTitle, randomColor } = require('./utils.js');
 
 // Get from ENV or read from settings (Heroku and dev. env implementation)
 const RIOT_KEY = process.env.RIOT_KEY || settings.ritoKey;
-const FALLBACK_VERSION = process.env.FALLBACK_VERSION || "10.3.1";
+const RIOT_TFT_KEY = process.env.RIOT_TFT_KEY || settings.ritoTftKey;
+const FALLBACK_VERSION = process.env.FALLBACK_VERSION || "10.9.1";
 
 // Global data
 let championList;
-let gameVersion = FALLBACK_VERSION;
+let gameVersion;
 let riotUserList = importRiotUserList;
 let riotIntervalFunction;
 let riotIntervalValue = 1000 * 60 * 10;
+let riotTftIntervalFunction;
+let riotTftIntervalValue = 1000 * 60 * 10;
 
 // Extract game versions
 const getLastGameVersion = async () =>
 	await fetch("https://ddragon.leagueoflegends.com/api/versions.json")
 		.then(res => res.json())
-			.then(json => json[0]);
+			.then(json => json[0])
+				.catch(error => {
+					console.log(error);
+					gameVersion = FALLBACK_VERSION;
+				});
 
 const getChampionList = async () =>
 	await fetch("http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/data/en_US/champion.json")
@@ -28,7 +35,7 @@ const getChampionList = async () =>
 
 // Extract data like accountId, avatar, lvl from summoner name
 const getSummonerDataBySummonerName = async (summonerName) => {
-    const url = "https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + summonerName + "?api_key=" + RIOT_KEY;
+    const url = "https://eun1.api.riotgames.com/lol/summoner/v4/summoners/by-name/" + encodeURI(summonerName) + "?api_key=" + RIOT_KEY;
 	return await fetch(url)
 		.then(res => res.json())
 			.then(json => json)
@@ -36,12 +43,12 @@ const getSummonerDataBySummonerName = async (summonerName) => {
 };
 
 // Get match history by accountId
-const getMatchesBySumonerAccountId = async (accountId) => {
+const getMatchesBySummonerAccountId = async (accountId) => {
 	const url = "https://eun1.api.riotgames.com/lol/match/v4/matchlists/by-account/" + accountId + "?api_key=" + RIOT_KEY;
 	return await fetch(url)
 		.then(res => res.json())
 			.then(json => json)
-				.catch(error => console.error("getMatchesBySumonerAccountId", error));
+				.catch(error => console.error("getMatchesBySummonerAccountId", error));
 };
 
 // Get full info about game stats by gameId
@@ -64,7 +71,7 @@ const getLastGameStats = async (summonerName, lastCheck) => {
 	// Extract needed variables from summoner data
 	const { accountId, summonerLevel } = summoner;
 	// Extract all match history using accountId
-	const matches = await getMatchesBySumonerAccountId(accountId);
+	const matches = await getMatchesBySummonerAccountId(accountId);
 	// Extract timestamp
 	const timestamp = await matches.matches[0].timestamp;
 	// Check if this game was already checked
@@ -127,9 +134,200 @@ const calculateTheGame = async(summonerName, lastCheck) => {
 };
 
 //-------------------------------------------------------
-// Discord methods
+// TFT methods
 //-------------------------------------------------------
 
+// Extract data like accountId, avatar, lvl from summoner name
+const getSummonerTftDataBySummonerName = async (summonerName) => {
+	const url = "https://eun1.api.riotgames.com/tft/summoner/v1/summoners/by-name/" + encodeURI(summonerName) + "?api_key=" + RIOT_TFT_KEY;
+	return await fetch(url)
+		.then(res => res.json())
+		.then(json => json)
+		.catch(error => console.error("getSummonerDataBySummonerName", error));
+};
+
+// Get match history by accountId
+const getTftMatchesBySummonerAccountId = async (puuid) => {
+	const url = "https://europe.api.riotgames.com/tft/match/v1/matches/by-puuid/" + puuid + "/ids?count=5&api_key=" + RIOT_TFT_KEY;
+	return await fetch(url)
+		.then(res => res.json())
+		.then(json => json)
+		.catch(error => console.error("getTftMatchesBySummonerAccountId", error));
+};
+
+// Get full info about game stats by gameId
+const getTftGameData = async (gameId) => {
+	const url = "https://europe.api.riotgames.com/tft/match/v1/matches/" + gameId + "?api_key=" + RIOT_TFT_KEY;
+	return await fetch(url)
+		.then(res => res.json())
+		.then(json => json)
+		.catch(error => console.error("getTftGameData", error));
+};
+
+
+const getLastTftGameStats = async (summonerName, lastCheckTft) => {
+	// Get summoner data by summoner name
+	const summoner = await getSummonerTftDataBySummonerName(summonerName);
+	// Extract needed variables from summoner data
+	const { accountId, puuid } = summoner;
+	// Extract all match history using accountId
+	const matches = await getTftMatchesBySummonerAccountId(puuid);
+	// If there's no any matches
+	if(await matches.length === 0) return false;
+	// Select last game
+	const lastMatchId = await matches[0];
+	// Get last game data
+	const { info: lastGameData } = await getTftGameData(lastMatchId)
+	// Extract participant using Riot's ppuid
+	const participantData = await lastGameData.participants.filter(x => x.puuid == puuid)[0];
+	// Check if this game was already used
+	if(lastCheckTft >= lastGameData.game_datetime) return {...participantData, ...summoner, summonerName: summonerName, newGame: false };
+	// Return parsed data for next function
+	return {...participantData, ...summoner, summonerName: summonerName, newGame: true}
+};
+
+const parseTftGameData = async (gameData) => {
+
+	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, companion, traits, units, total_damage_to_players, newGame } = gameData;
+
+	return {
+		summonerName: summonerName,
+		summonerIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
+		gold_left: gold_left,
+		lasted: last_round,
+		level: level,
+		placement: placement,
+		eliminated: players_eliminated,
+		totalDmg: total_damage_to_players,
+		newGame: newGame,
+		traits: traits,
+	}
+}
+
+// Fuse summoner data with game data and assets
+const calculateTheTftGame = async(summonerName, lastCheck) => {
+	if(!gameVersion) {
+		getLastGameVersion()
+			.then(async version => gameVersion = version)
+			.catch(error => console.log(error));
+	}
+	return await getLastTftGameStats(summonerName, lastCheck)
+		.then(gameData => parseTftGameData(gameData))
+		.catch(error => console.error(error));
+};
+
+const tft3Names = {
+	"blaster": { name: "Blaster", icon: "<:blaster:709237931025498184>" },
+	"chrono": { name: "Chrono", icon: "<:chrono:709237949627367526>" },
+	"cybernetic": { name: "Cybernetic", icon: "<:cybernetic:709237972427472906>" },
+	"rebel": { name: "Rabel", icon: "<:rebel:709237972372815872>" },
+	"blademaster": { name: "Blademaster", icon: "<:blademaster:709240564125794315>" },
+	"brawler": { name: "Brawler", icon: "<:brawler:709240564024999958>" },
+	"void": { name: "Void", icon: "<:void:709241634860171324>" },
+	"spacepirate": { name: "Space Pirate", icon: "<:spacepirate:709237972423409684>" },
+	"darkstar": { name: "Dark Star", icon: "<:darkstar:709237972368621579>" },
+	"protector": { name: "Protector", icon: "<:protector:709237972372815933>" },
+	"celestial": { name: "Celestial", icon: "<:celestial:709237941922299905>" },
+	"sniper": { name: "Sniper", icon: "<:sniper:709237972318552085>" },
+	"starguardian": { name: "Star Guardian", icon: "<:starguardian:709237972381466755>" },
+	"vanguard": { name: "Vanguard", icon: "<:vanguard:709237972117225544>" },
+	"infiltrator": { name: "Infiltrator", icon: "<:infiltrator:709237972364427364>" },
+	"manareaver": { name: "Mana Reaver", icon: "<:manareaver:709237972137934910>" },
+	"mercenary": { name: "Mercenary", icon: "<:mercenary:709237972368883794>" },
+	"valkyrie": { name: "Valkyrie", icon: "<:valkyrie:709237973119402094>" },
+	"starship": { name: "Star ship", icon: "<:starship:709237972372815963>" },
+};
+
+//-------------------------------------------------------
+// Discord methods - TFT
+//-------------------------------------------------------
+
+
+// We have to separate this method for reusing
+const checkAllTftGamesAndSendMessage = (message) => {
+	riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
+		setTimeout(() => {
+			calculateTheTftGame(summonerName, lastCheck).then(game => {
+				// console.log("\nCheck.", game);
+				// Spred values
+				const { summonerName: sumName, timestamp, newGame, summonerIcon, traits, placement } = game;
+				// Update timestamp
+				riotUserList[key]["lastCheck"] = timestamp;
+
+				if(key > 2) return false;
+
+				// Return if is not a new game
+				if(newGame === false) return false;
+
+				if(placement < 4) return false;
+
+				let fieldsTraits = traits.map(({name, num_units}) => ({
+					name: tft3Names[name.replace(/Set3_/g,"").toLowerCase()].icon + " - " + num_units,
+					value: tft3Names[name.replace(/Set3_/g,"").toLowerCase()].name,
+					inline: true
+				}))
+
+				message.channel.send({
+					"embed": {
+						"title": "[Title]",
+						"color": randomColor(),
+						"description": "\n" + discordName + "```\n" + randomFlameMsg() + "```",
+						"footer": {
+							"icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
+							"text": "This was provided by Kmica Bot"
+						},
+						"thumbnail": {
+							"url": summonerIcon
+						},
+						"author": {
+							"name": sumName,
+							"icon_url": summonerIcon
+						},
+						"fields": fieldsTraits
+					}
+				});
+			});
+		}, 2000 * key);
+	});
+};
+
+// Set interval of TFT watcher
+const setTftWatcherInterval = (command, prefix, param1, param2, message) => {
+	if(command === prefix + 'lol-interval') {
+		// If there's no param
+		if(!param1) return message.channel.send("To use this command send: `!" + prefix + "lol-interval [MS-INTERVAL]`");
+		// Send confirmation message
+		message.channel.send("TFT watcher is enabled :eyes:");
+		// Change interval
+		riotTftIntervalValue = param1;
+	}
+};
+
+// Remove interval and disable TFT watcher
+const stopTftWatcher = (command, prefix, param1, param2, message) => {
+	if(command === prefix + 'tft-stop') {
+		clearInterval(riotTftIntervalFunction);
+		message.channel.send("TFT watcher is disabled :x:");
+	}
+};
+
+// Start watching in defined intervals
+const startTftWatcher = (command, prefix, param1, param2, message) => {
+	if(command === prefix + 'tft-start') {
+		riotTftIntervalFunction = setInterval(() => {
+			checkAllTftGamesAndSendMessage(message);
+		}, param1 || riotTftIntervalValue);
+	}
+};
+
+// Start watching in defined intervals
+const instantTftWatcher = (command, prefix, param1, param2, message) => {
+	if(command === prefix + 'tft-refresh') checkAllTftGamesAndSendMessage(message);
+};
+
+//-------------------------------------------------------
+// Discord methods - LOL
+//-------------------------------------------------------
 
 // We have to separate this method for reusing
 const checkAllLolGamesAndSendMessage = (message) => {
@@ -156,7 +354,7 @@ const checkAllLolGamesAndSendMessage = (message) => {
 					"description": "\n" + discordName + "```\n" + randomFlameMsg() + "```",
 					"footer": {
 					  "icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
-					  "text": "This was provided by KmicaBot"
+					  "text": "This was provided by Kmica Bot"
 					},
 					"thumbnail": {
 					  "url": championIcon
@@ -213,9 +411,12 @@ const addUserToLolWatchList = (command, prefix, param1, param2, message) => {
 	}
 };
 
-// @TODO: Remove user for the list
+// Remove user for the list
 const deleteUserFromLolWatchList = (command, prefix, param1, param2, message) => {
-	if(command === prefix + 'lol-user-delete') return message.channel.send("This option is under development at the moment.");
+	if(command === prefix + 'lol-user-delete') {
+		riotUserList = riotUserList.filter(user => user.summonerName != param1);
+		return message.channel.send("Summoner removed form list");
+	}
 };
 
 // Set interval of LOL watcher
@@ -249,7 +450,7 @@ const stopLolWatcher = (command, prefix, param1, param2, message) => {
 	}
 };
 
-// Start waching in defined intervals
+// Start watching in defined intervals
 const startLolWatcher = (command, prefix, param1, param2, message) => {
 	if(command === prefix + 'lol-start') {
 		riotIntervalFunction = setInterval(() => {
@@ -258,7 +459,7 @@ const startLolWatcher = (command, prefix, param1, param2, message) => {
     }
 };
 
-// Start waching in defined intervals
+// Start watching in defined intervals
 const instantLolWatcher = (command, prefix, param1, param2, message) => {
 	if(command === prefix + 'lol-refresh') checkAllLolGamesAndSendMessage(message);
 };
@@ -271,5 +472,9 @@ module.exports = {
 	getLolWatchUserList: getLolWatchUserList,
 	stopLolWatcher: stopLolWatcher,
 	startLolWatcher: startLolWatcher,
-	instantLolWatcher: instantLolWatcher
+	instantLolWatcher: instantLolWatcher,
+	setTftWatcherInterval: setTftWatcherInterval,
+	startTftWatcher: startTftWatcher,
+	stopTftWatcher: stopTftWatcher,
+	instantTftWatcher: instantTftWatcher,
 };
