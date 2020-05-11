@@ -2,7 +2,7 @@ const settings = require('../config.json');
 const https = require("https");
 const fetch = require("node-fetch");
 const { importRiotUserList } = require('../data/ritoUserList.js');
-const { randomFlameMsg, randomFlameTitle, randomColor } = require('./utils.js');
+const { randomFlameMsg, randomFlameTitle, randomColor, randomNumber } = require('./utils.js');
 
 // Get from ENV or read from settings (Heroku and dev. env implementation)
 const RIOT_KEY = process.env.RIOT_KEY || settings.ritoKey;
@@ -245,6 +245,21 @@ const tft3Names = {
 	"mechpilot": { name: "Mech Pilot", icon: "<:mechpilot:709237972389724181>" },
 };
 
+const tftPlacementTitles = (place) => {
+	let placement = [
+		['Vrati Srxu cit', 'Ajdeeee beeee booo', 'Svaka dala momce'],
+		['I tvoja devojka uvek druga zavrsi', 'I roditeljima si bio drugo omiljeno dete, moze i u TFT-u', 'Nisi update cit, izasao danas novi patch'],
+		['3', '3'],
+		['4', '4'],
+		['5', '5'],
+		['Kakav na fakultetu, takav i na TeFTu OJSAAA!', ''],
+		['Da umes da igras ovo se ne bi desilo', 'Ovo je apeks tvojih mogucnosti', 'E to trazis pesmu od EKV-a 7. dana?'],
+		['"TFT" je kod tebe skrace od "Total Fuck Tard"', 'I nisam imao veca ocekivanja za tebe', 'Opet brukas sebe i svoje i sve nas ovde?', 'Pa dobro i ribi si bio 8. pa se volite'],
+	];
+
+	return placement[place - 1][randomNumber(placement[place - 1].length)]
+}
+
 //-------------------------------------------------------
 // Discord methods - TFT
 //-------------------------------------------------------
@@ -268,9 +283,9 @@ const checkAllTftGamesAndSendMessage = (message) => {
 
 				message.channel.send({
 					"embed": {
-						"title": placement < 6 ? 'Sad ' : '' + ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'][placement - 1] + " place",
+						"title": tftPlacementTitles(placement),
 						"color": randomColor(),
-						"description": discordName + "```" + randomFlameMsg() + "```",
+						"description": "Zavrsio na **" + placement + ".** mestu, " + discordName + "\n```" + randomFlameMsg() + "```",
 						"footer": {
 							"icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
 							"text": "This was provided by Kmica Bot"
