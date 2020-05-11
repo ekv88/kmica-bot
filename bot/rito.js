@@ -202,11 +202,14 @@ const parseTftGameData = async (gameData) => {
 		placement: placement,
 		eliminated: players_eliminated,
 		totalDmg: total_damage_to_players,
-		traits: traits ? traits.filter(trait => tft3Names[traitName(trait.name)] !== undefined).map(({name, num_units}) => ({
-			name: tft3Names[traitName(name)].icon + " (" + num_units + ")",
-			value: tft3Names[traitName(name)].name,
-			inline: true
-		})) : null
+		traits: traits ?
+			traits.filter(trait => tft3Names[traitName(trait.name)] !== undefined)
+			.sort((a, b) => (a.num_units > b.num_units) ? -1 : 1)
+			.map(({name, num_units}) => ({
+				name: tft3Names[traitName(name)].icon + " (" + num_units + ")",
+				value: tft3Names[traitName(name)].name,
+				inline: true,
+			})) : null
 	}
 }
 
@@ -252,12 +255,37 @@ const tftPlacementTitles = (place) => {
 		['3', '3'],
 		['4', '4'],
 		['5', '5'],
-		['Kakav na fakultetu, takav i na TeFTu OJSAAA!', ''],
+		['Kakav na fakultetu, takav i na TeFTu OJSAAA!', 'Steta sto TFT nema tutorijal jer ti je preko potreban'],
 		['Da umes da igras ovo se ne bi desilo', 'Ovo je apeks tvojih mogucnosti', 'E to trazis pesmu od EKV-a 7. dana?'],
 		['"TFT" je kod tebe skrace od "Total Fuck Tard"', 'I nisam imao veca ocekivanja za tebe', 'Opet brukas sebe i svoje i sve nas ovde?', 'Pa dobro i ribi si bio 8. pa se volite'],
 	];
 
 	return placement[place - 1][randomNumber(placement[place - 1].length)]
+}
+
+const tftTraitMessages = (trait) => {
+	let messages = {
+		"blaster": ['Msg1', 'Msg2'],
+		"chrono": ['Msg1', 'Msg2'],
+		"cybernetic": ['Msg1', 'Msg2'],
+		"rebel": ['Msg1', 'Msg2'],
+		"blademaster": ['Msg1', 'Msg2'],
+		"brawler": ['Msg1', 'Msg2'],
+		"void": ['Msg1', 'Msg2'],
+		"spacepirate": ['Msg1', 'Msg2'],
+		"darkstar": ['Msg1', 'Msg2'],
+		"protector": ['Msg1', 'Msg2'],
+		"celestial": ['Msg1', 'Msg2'],
+		"sniper": ['Msg1', 'Msg2'],
+		"starguardian": ['Msg1', 'Msg2'],
+		"vanguard": ['Msg1', 'Msg2'],
+		"infiltrator": ['Msg1', 'Msg2'],
+		"manareaver": ['Msg1', 'Msg2'],
+		"mercenary": ['Msg1', 'Msg2'],
+		"valkyrie": ['Msg1', 'Msg2'],
+		"starship": ['Msg1', 'Msg2'],
+		"mechpilot": ['Msg1', 'Msg2'],
+	}
 }
 
 //-------------------------------------------------------
