@@ -192,6 +192,8 @@ const parseTftGameData = async (gameData) => {
 
 	const traitName = (name) => name.replace(/Set3_/g,"").toLowerCase();
 
+	const sortTraits = traits ? traits.filter(trait => tft3Names[traitName(trait.name)] !== undefined).sort((a, b) => (a.num_units > b.num_units) ? -1 : 1) : null
+
 	return {
 		...gameData,
 		summonerName: summonerName,
@@ -202,14 +204,15 @@ const parseTftGameData = async (gameData) => {
 		placement: placement,
 		eliminated: players_eliminated,
 		totalDmg: total_damage_to_players,
-		traits: traits ?
-			traits.filter(trait => tft3Names[traitName(trait.name)] !== undefined)
-			.sort((a, b) => (a.num_units > b.num_units) ? -1 : 1)
-			.map(({name, num_units}) => ({
-				name: tft3Names[traitName(name)].icon + " (" + num_units + ")",
-				value: tft3Names[traitName(name)].name,
-				inline: true,
-			})) : null
+		mainTrait: sortTraits ? traitName(sortTraits[0].name) : null,
+		traits: sortTraits ?
+			sortTraits.filter(trait => tft3Names[traitName(trait.name)] !== undefined)
+				.sort((a, b) => (a.num_units > b.num_units) ? -1 : 1)
+					.map(({name, num_units}) => ({
+						name: tft3Names[traitName(name)].icon + " (" + num_units + ")",
+						value: tft3Names[traitName(name)].name,
+						inline: true,
+					})) : null
 	}
 }
 
@@ -286,6 +289,8 @@ const tftTraitMessages = (trait) => {
 		"starship": ['Msg1', 'Msg2'],
 		"mechpilot": ['Msg1', 'Msg2'],
 	}
+
+	return messages[trait] ? messages[trait][randomNumber(messages[trait].length)] : trait;
 }
 
 //-------------------------------------------------------
@@ -300,7 +305,7 @@ const checkAllTftGamesAndSendMessage = (message) => {
 			calculateTheTftGame(summonerName, lastCheck).then(game => {
 				// console.log("\nCheck.", game);
 				// Spred values
-				const { summonerName: sumName, timestamp, newGame, summonerIcon, traits, placement } = game;
+				const { summonerName: sumName, timestamp, newGame, summonerIcon, traits, placement, mainTrait } = game;
 				// Update timestamp
 				riotUserList[key]["lastCheck"] = timestamp;
 
@@ -313,7 +318,7 @@ const checkAllTftGamesAndSendMessage = (message) => {
 					"embed": {
 						"title": tftPlacementTitles(placement),
 						"color": randomColor(),
-						"description": "Zavrsio na **" + placement + ".** mestu, " + discordName + "\n```" + randomFlameMsg() + "```",
+						"description": "Zavrsio na **" + placement + ".** mestu, " + discordName + "\n```" + tftTraitMessages(mainTrait) + "```" + mainTrait,
 						"footer": {
 							"icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
 							"text": "This was provided by Kmica Bot"
