@@ -159,18 +159,6 @@ client.on('message', message => {
     // Refresh league of legend watcher right now - Use this for tests
     instantLolWatcher(command, prefix, param1, param2, message);
 
-    // Set TFT watcher refresh interval in MS
-    setTftWatcherInterval(command, prefix, param1, param2, message);
-
-    // Sto TFT watcher
-    startTftWatcher(command, prefix, param1, param2, message);
-
-    // Start TFT watcher
-    stopTftWatcher(command, prefix, param1, param2, message);
-
-    // Refresh TFT watcher right now - Use this for tests
-    instantTftWatcher(command, prefix, param1, param2, message);
-
     // ---------------------------
     // admin.js - PART OF BOT
 
@@ -192,6 +180,21 @@ client.on('message', message => {
 
         // Shutdown bot
         sendToGulag(command, prefix, param1, param2, message, client);
+
+
+        /*** As it's still under development allow for admins and mods for now **/
+
+        // Set TFT watcher refresh interval in MS
+        setTftWatcherInterval(command, prefix, param1, param2, message);
+
+        // Sto TFT watcher
+        startTftWatcher(command, prefix, param1, param2, message);
+
+        // Start TFT watcher
+        stopTftWatcher(command, prefix, param1, param2, message);
+
+        // Refresh TFT watcher right now - Use this for tests
+        instantTftWatcher(command, prefix, param1, param2, message);
     }
 
 

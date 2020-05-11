@@ -9,14 +9,14 @@ const RIOT_KEY = process.env.RIOT_KEY || settings.ritoKey;
 const RIOT_TFT_KEY = process.env.RIOT_TFT_KEY || settings.ritoTftKey;
 const FALLBACK_VERSION = process.env.FALLBACK_VERSION || "10.9.1";
 
-// Global data
+// Global variables
 let championList;
 let gameVersion;
 let riotUserList = importRiotUserList;
 let riotIntervalFunction;
 let riotIntervalValue = 1000 * 60 * 10;
 let riotTftIntervalFunction;
-let riotTftIntervalValue = 1000 * 60 * 10;
+let riotTftIntervalValue = riotIntervalValue;
 
 // Extract game versions
 const getLastGameVersion = async () =>
@@ -164,7 +164,6 @@ const getTftGameData = async (gameId) => {
 		.catch(error => console.error("getTftGameData", error));
 };
 
-
 const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 	// Get summoner data by summoner name
 	const summoner = await getSummonerTftDataBySummonerName(summonerName);
@@ -172,8 +171,8 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 	const { accountId, puuid } = summoner;
 	// Extract all match history using accountId
 	const matches = await getTftMatchesBySummonerAccountId(puuid);
-	// If there's no any matches
-	if(await matches.length === 0) return false;
+	// If there's no any matches return without new game
+	if(await matches.length === 0 || await matches.status) return {...summoner, summonerName: summonerName, newGame: false };
 	// Select last game
 	const lastMatchId = await matches[0];
 	// Get last game data
@@ -187,10 +186,14 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 };
 
 const parseTftGameData = async (gameData) => {
+	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, total_damage_to_players, traits } = gameData;
 
-	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, companion, traits, units, total_damage_to_players, newGame } = gameData;
+	console.log(summonerName + " - TFT check")
+
+	const traitName = (name) => name.replace(/Set3_/g,"").toLowerCase();
 
 	return {
+		...gameData,
 		summonerName: summonerName,
 		summonerIcon: "http://ddragon.leagueoflegends.com/cdn/" + gameVersion + "/img/profileicon/" + profileIconId + ".png",
 		gold_left: gold_left,
@@ -199,8 +202,11 @@ const parseTftGameData = async (gameData) => {
 		placement: placement,
 		eliminated: players_eliminated,
 		totalDmg: total_damage_to_players,
-		newGame: newGame,
-		traits: traits,
+		traits: traits ? traits.filter(trait => tft3Names[traitName(trait.name)] !== undefined).map(({name, num_units}) => ({
+			name: tft3Names[traitName(name)].icon + " (" + num_units + ")",
+			value: tft3Names[traitName(name)].name,
+			inline: true
+		})) : null
 	}
 }
 
@@ -209,11 +215,11 @@ const calculateTheTftGame = async(summonerName, lastCheck) => {
 	if(!gameVersion) {
 		getLastGameVersion()
 			.then(async version => gameVersion = version)
-			.catch(error => console.log(error));
+				.catch(error => console.log(error));
 	}
 	return await getLastTftGameStats(summonerName, lastCheck)
-		.then(gameData => parseTftGameData(gameData))
-		.catch(error => console.error(error));
+		.then(async gameData => parseTftGameData(gameData))
+			.catch(error => console.error(error));
 };
 
 const tft3Names = {
@@ -236,16 +242,17 @@ const tft3Names = {
 	"mercenary": { name: "Mercenary", icon: "<:mercenary:709237972368883794>" },
 	"valkyrie": { name: "Valkyrie", icon: "<:valkyrie:709237973119402094>" },
 	"starship": { name: "Star ship", icon: "<:starship:709237972372815963>" },
+	"mechpilot": { name: "Mech Pilot", icon: "<:mechpilot:709237972389724181>" },
 };
 
 //-------------------------------------------------------
 // Discord methods - TFT
 //-------------------------------------------------------
 
-
 // We have to separate this method for reusing
 const checkAllTftGamesAndSendMessage = (message) => {
 	riotUserList.map(({summonerName, discordName, lastCheck}, key) => {
+		// if(key > 0) return false;
 		setTimeout(() => {
 			calculateTheTftGame(summonerName, lastCheck).then(game => {
 				// console.log("\nCheck.", game);
@@ -254,24 +261,16 @@ const checkAllTftGamesAndSendMessage = (message) => {
 				// Update timestamp
 				riotUserList[key]["lastCheck"] = timestamp;
 
-				if(key > 2) return false;
-
 				// Return if is not a new game
 				if(newGame === false) return false;
 
-				if(placement < 4) return false;
-
-				let fieldsTraits = traits.map(({name, num_units}) => ({
-					name: tft3Names[name.replace(/Set3_/g,"").toLowerCase()].icon + " - " + num_units,
-					value: tft3Names[name.replace(/Set3_/g,"").toLowerCase()].name,
-					inline: true
-				}))
+				if(placement < 4 && !traits) return false;
 
 				message.channel.send({
 					"embed": {
-						"title": "[Title]",
+						"title": placement < 6 ? 'Sad ' : '' + ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'][placement - 1] + " place",
 						"color": randomColor(),
-						"description": "\n" + discordName + "```\n" + randomFlameMsg() + "```",
+						"description": discordName + "```" + randomFlameMsg() + "```",
 						"footer": {
 							"icon_url": "https://cdn.discordapp.com/app-icons/639964879738109994/9a39a3721ecf89e70d44834a1f4c8b00.png",
 							"text": "This was provided by Kmica Bot"
@@ -283,7 +282,7 @@ const checkAllTftGamesAndSendMessage = (message) => {
 							"name": sumName,
 							"icon_url": summonerIcon
 						},
-						"fields": fieldsTraits
+						"fields": traits
 					}
 				});
 			});

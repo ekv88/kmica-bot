@@ -15,7 +15,7 @@ const userList = [{
 		discordName: '<@!263667003452162049>',
 		lastCheck: 1581379333527
 	},{
-		summonerName: 'Empty Spaces',
+		summonerName: 'EmptySpaces',
 		discordName: '<@!289570348389761024>',
 		lastCheck: 0
 	},{
