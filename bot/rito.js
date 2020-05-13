@@ -180,7 +180,7 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 	// Extract participant using Riot's ppuid
 	const participantData = await lastGameData.participants.filter(x => x.puuid == puuid)[0];
 	// Check if this game was already used
-	if(lastCheckTft >= lastGameData.game_datetime) return {...participantData, ...summoner, summonerName: summonerName, newGame: false };
+	if(await lastCheckTft >= lastGameData.game_datetime) return {...participantData, ...summoner, summonerName: summonerName, newGame: false };
 	// Return parsed data for next function
 	return {...participantData, ...summoner, summonerName: summonerName, newGame: true}
 };

@@ -1,10 +1,8 @@
 // Extract the required classes from the discord.js module
 const Discord = require('discord.js');
 const { Client, Attachment } = Discord;
+const { serverInitCheck } = require('./db');
 const settings = require('./config.json');
-const fs = require('fs');
-// const dialogflow = require('dialogflow');
-const cahData = require('./data/cah-data.js');
 
 // Bot methods and ulits
 const { randomNumber, randomColor, musicCommandWatcher, joinVoiceChannel, verifyUser } = require('./bot/utils.js');
@@ -35,14 +33,6 @@ client.on('ready', () => {
     // client.user.setActivity('god with gods');
     // client.user.setActivity("gods dying", { type: "WATCHING" })
     client.user.setActivity("gods dying", { type: "WATCHING" })
-    // client.user.setActivity("pornhub.com", { type: "WATCHING", url: "https://www.pornhub.com" })
-    // client.user.setPresence({
-    //     game: {
-    //         name: 'gods dying',
-    //         type: 'WATCHING'
-    //     },
-    //     status: 'idle'
-    // });
 
     console.log('Init message');
 });
@@ -66,12 +56,15 @@ client.on('guildMemberRemove', message => {
     message.guild.channels.get('657649922123890710').send('**' + message.user.username + '**, picketina nas napustila, ko od ne mora ni da se vraca!');
 });
 
-client.on('message', message => {
+client.on('message', async message => {
     // Prevent bot form taking commands from himself
     if (message.author.bot) return;
 
-    // Extract command and params
-	let { prefix } = settings;
+    var serverId = message.channel.guild.id;
+    let config = await serverInitCheck(serverId, message.channel.guild.name);
+
+    // Extract params
+	let { prefix, musicWatcher } = config.val();
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
@@ -83,7 +76,7 @@ client.on('message', message => {
     if (message.channel.type === 'dm') return;
 	
     // Mr Police man
-    musicCommandWatcher(command, prefix, param1, param2, message);
+    if(musicWatcher) musicCommandWatcher(command, prefix, param1, param2, message);
 
     // Ignore rest of messages
     if (!message.content.startsWith(settings.prefix)) return;
