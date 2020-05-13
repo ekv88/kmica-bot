@@ -6,7 +6,12 @@ const serviceAccount = process.env.FIREBASE_CONFIG || settings.firebase;
 
 // Initialize the app with a service account, granting admin privileges
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+    // credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert({
+        "private_key": process.env.FIREBASE_PRIVATE_KEY || settings.firebase.private_key,
+        "client_email": process.env.FIREBASE_CLIENT_EMAIL || settings.firebase.client_email,
+        "project_id": process.env.FIREBASE_PROJECT_ID || settings.firebase.project_id,
+    }),
     databaseURL: "https://kmica-bot.firebaseio.com/"
 });
 
