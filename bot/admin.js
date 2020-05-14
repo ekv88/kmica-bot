@@ -2,15 +2,15 @@ const settings = require('../config.json');
 const { randomColor, randomNumber } = require('./utils.js');
 
 // Implement a user role reader here as beeter solution
-const botDebugStats = (command, prefix, param1, param2, message) => {
-    if (command === settings.prefix + 'debug') {
+const botDebugStats = (command, prefix, param1, param2, message, client, config) => {
+    if (command === prefix + 'debug') {
         // console.log(message.author);
         // if(message.author.username !== 'ekv' && message.author.discriminator !== 6479)
 
         // Implement logging
         message.channel.send({
             "embed": {
-                "description": "Izvolite gospodine sve informacije do sad:",
+                "description": "Debug server settings:\n" + JSON.stringify(config),
                 "color": randomColor(),
                 "thumbnail": {
                     "url": message.author.avatarURL
@@ -39,7 +39,7 @@ const sayToAllChannels = (command, prefix, param1, param2, message, client) => {
 		
         message.client.guilds.cache.map((guild) => {
             guild.channels.cache.map(channel => {
-				if(channel.type === 'text') client.channels.get(channel.id).send(message.content.substring(prefix.length + 3))
+				if(channel.type === 'text') client.channels.cache.get(channel.id).send(message.content.substring(prefix.length + 3))
 			});
         });
     }

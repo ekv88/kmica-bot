@@ -1,7 +1,7 @@
 // Extract the required classes from the discord.js module
 const Discord = require('discord.js');
 const { Client, Attachment } = Discord;
-const { serverInitCheck } = require('./db');
+const { serverInitCheck, db, getRoles } = require('./db');
 const settings = require('./config.json');
 
 // Bot methods and ulits
@@ -28,6 +28,10 @@ let CAH_GAME_ROOMS = [];
 
 // Create an instance of a Discord client
 const client = new Client();
+
+// New multi server config
+let SERVER_CONFIG = {};
+let SERVER_ROLES = {};
 
 client.on('ready', () => {
     // client.user.setActivity('god with gods');
@@ -62,9 +66,19 @@ client.on('message', async message => {
 
     var serverId = message.channel.guild.id;
     let config = await serverInitCheck(serverId, message.channel.guild.name);
+    SERVER_CONFIG[serverId] = config.val();
+
+    if(!SERVER_ROLES[serverId]) {
+        let roles = await getRoles(serverId);
+        SERVER_ROLES[serverId] = await Object.values(roles.val());
+        console.log("SERVER_ROLES[" + serverId + "]", SERVER_ROLES[serverId])
+    }
 
     // Extract params
-	let { prefix, musicWatcher } = config.val();
+	let { prefix, musicWatcher } = SERVER_CONFIG[serverId];
+
+	console.log("Server config: \n", SERVER_CONFIG[serverId], prefix)
+
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
     let param2 = message.content.split(" ")[2] ? message.content.split(" ")[2] : null;
@@ -76,13 +90,15 @@ client.on('message', async message => {
     if (message.channel.type === 'dm') return;
 	
     // Mr Police man
-    if(musicWatcher) musicCommandWatcher(command, prefix, param1, param2, message);
+    if(musicWatcher === true) {
+        musicCommandWatcher(command, prefix, param1, param2, message);
+    }
 
     // Ignore rest of messages
-    if (!message.content.startsWith(settings.prefix)) return;
+    if (!message.content.startsWith(prefix)) return;
  
     // Change prefix
-    if(command === settings.prefix + "newPrefix") {
+    if(command === prefix + "newPrefix") {
         if(!param1) {
             message.channel.send({
                 "embed": {
@@ -93,6 +109,7 @@ client.on('message', async message => {
             });
             return false;
         }
+        // @TODO: Update prefix
         settings['prefix'] = param1;
         message.channel.send({
             "embed": {
@@ -158,9 +175,10 @@ client.on('message', async message => {
     // message.member.roles.cache.some(role => console.log(role.id, role.name));
 
     // If member has one of admin/mod id roles
-    if(message.member.roles.cache.some(role => ["589872090606338062", "589872418353315850"].includes(role.id))) {
+    if(message.member.roles.cache.some(role => SERVER_ROLES[serverId] ? SERVER_ROLES[serverId].includes(role.id) : false)) {
+
         // Return bot debug - @TODO: Next milestone
-        botDebugStats(command, prefix, param1, param2, message);
+        botDebugStats(command, prefix, param1, param2, message, client, config);
 
         // Send text message to every possible channel
         sayToAllChannels(command, prefix, param1, param2, message, client);
@@ -173,7 +191,6 @@ client.on('message', async message => {
 
         // Shutdown bot
         sendToGulag(command, prefix, param1, param2, message, client);
-
 
         /*** As it's still under development allow for admins and mods for now **/
 
@@ -192,7 +209,7 @@ client.on('message', async message => {
 
 
     // Change prefix
-    if(command === settings.prefix + "lfg") {
+    if(command === prefix + "lfg") {
         message.channel.send({
             "embed": {
                 "title": "Shall we play a game?",
@@ -207,6 +224,8 @@ client.on('message', async message => {
             });
         });
     }
+
+    console.log("NISTA ME NE PREKIDA ALO");
 
     // ---------------------------
     // games.js - PART OF BOT

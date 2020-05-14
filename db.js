@@ -8,7 +8,7 @@ const serviceAccount = process.env.FIREBASE_CONFIG || settings.firebase;
 admin.initializeApp({
     // credential: admin.credential.cert(serviceAccount),
     credential: admin.credential.cert({
-        "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') || settings.firebase.private_key,
+        "private_key": process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') : settings.firebase.private_key,
         "client_email": process.env.FIREBASE_CLIENT_EMAIL || settings.firebase.client_email,
         "project_id": process.env.FIREBASE_PROJECT_ID || settings.firebase.project_id,
     }),
@@ -31,7 +31,7 @@ const serverInitCheck = async (serverId, serverName) => {
 /* Get admin roles */
 const getRoles = (serverId) => {
     const roles = db.ref(`/${serverId}/roles`);
-    return roles.once("value", (snap) => snap);
+    return roles.once("value", (snap) => snap.val());
 }
 
 const serverInstallation = (serverId, serverName) => {
@@ -43,13 +43,13 @@ const serverInstallation = (serverId, serverName) => {
     const config = db.ref(`/${serverId}/config`);
     const emotes = db.ref(`/${serverId}/emotes`);
 
-    riot.push("");
-    warnings.push("");
-    music.push("");
-    memes.push("");
-    roles.push("");
-    config.push("");
-    emotes.push("");
+    // riot.push("");
+    // warnings.push("");
+    // music.push("");
+    // memes.push("");
+    // roles.push("");
+    // config.push("");
+    // emotes.push("");
 
     const confObj = {
         "serverName": serverName,

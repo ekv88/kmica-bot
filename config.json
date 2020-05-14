@@ -3,5 +3,12 @@
   "prefix": "!",
   "musicPrefix": ["-p", "-play", "!play", "!p", "!search", "-search"],
   "GoogleCloudProjectId": "",
-  "ritoKey": ""
+  "ritoKey": "",
+  "ritoTftKey": "",
+  "firebase": {
+    "project_id": "",
+    "private_key": "",
+    "client_email": "",
+    "client_id": ""
+  }
 }

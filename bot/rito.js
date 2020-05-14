@@ -180,6 +180,7 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 	// Extract participant using Riot's ppuid
 	const participantData = await lastGameData.participants.filter(x => x.puuid == puuid)[0];
 	// Check if this game was already used
+	console.log("lastGameData.game_datetime", lastGameData.game_datetime, lastGameData)
 	if(await lastCheckTft >= lastGameData.game_datetime) return {...participantData, ...summoner, summonerName: summonerName, newGame: false };
 	// Return parsed data for next function
 	return {...participantData, ...summoner, summonerName: summonerName, newGame: true}
@@ -188,7 +189,7 @@ const getLastTftGameStats = async (summonerName, lastCheckTft) => {
 const parseTftGameData = async (gameData) => {
 	const { summonerName, profileIconId, gold_left, last_round, level, placement, players_eliminated, total_damage_to_players, traits, game_datetime } = gameData;
 
-	console.log(summonerName + " - TFT check")
+	console.log(summonerName + " - TFT check ulaz 1")
 
 	const traitName = (name) => name.replace(/Set3_/g,"").toLowerCase();
 
@@ -301,11 +302,12 @@ const tftTraitMessages = (trait) => {
 // We have to separate this method for reusing
 const checkAllTftGamesAndSendMessage = (message) => {
 	riotUserList.map(({summonerName, discordName, tftLastCheck}, key) => {
-		// if(key > 0) return false;
+		if(key > 2) return false;
 		setTimeout(() => {
 			calculateTheTftGame(summonerName, tftLastCheck).then(game => {
 				// console.log("\nCheck.", game);
 				// Spred values
+				console.log(summonerName + " - TFT check ulaz 2", game)
 				const { summonerName: sumName, timestamp, newGame, summonerIcon, traits, placement, mainTrait } = game;
 				// Update timestamp
 				riotUserList[key]["tftLastCheck"] = timestamp;
