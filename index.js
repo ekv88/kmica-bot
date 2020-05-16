@@ -75,9 +75,7 @@ client.on('message', async message => {
     }
 
     // Extract params
-	let { prefix, musicWatcher } = SERVER_CONFIG[serverId];
-
-	console.log("Server config: \n", SERVER_CONFIG[serverId], prefix)
+	let { prefix, musicWatcher, memeChannel } = SERVER_CONFIG[serverId];
 
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
@@ -93,6 +91,42 @@ client.on('message', async message => {
     if(musicWatcher === true) {
         musicCommandWatcher(command, prefix, param1, param2, message);
     }
+
+    if(message.channel.id === memeChannel) {
+        let attachArray = message.attachments.array();
+        if(attachArray.length > 0) {
+            let { id: attachId, attachment, name, size, url, height, width } = attachArray[0];
+            let memeDb = db.ref(`/${serverId}/memes/${attachId}`);
+            let preparedObj = {
+                id: attachId,
+                attachment: attachment,
+                name: name,
+                size: size,
+                url: url,
+                height: height,
+                width: width,
+                content: message.content,
+                channelId: message.channel.id,
+                authorId: message.author.id,
+                authorUsername: message.author.username,
+            }
+            memeDb.set(preparedObj).then(_ => {
+                let memeLord = db.ref(`/${serverId}/meme-lords/${message.author.id}`);
+                let prepareLord = {
+                    id: message.author.id,
+                    username: message.author.username,
+                    discriminator: message.author.discriminator,
+                    avatar: message.author.avatar,
+                }
+                memeLord.set(prepareLord);
+            });
+            // let memeDb = db.ref(`/${serverId}/memes/${attachId}`);
+            console.log("ID: ", attachArray[0].id, ", Nova MIMARA!")
+        }
+    }
+    // Meme methods att - name, id, size, url, attachment
+
+
 
     // Ignore rest of messages
     if (!message.content.startsWith(prefix)) return;
@@ -172,8 +206,6 @@ client.on('message', async message => {
     // ---------------------------
     // admin.js - PART OF BOT
 
-    // message.member.roles.cache.some(role => console.log(role.id, role.name));
-
     // If member has one of admin/mod id roles
     if(message.member.roles.cache.some(role => SERVER_ROLES[serverId] ? SERVER_ROLES[serverId].includes(role.id) : false)) {
 
@@ -207,7 +239,6 @@ client.on('message', async message => {
         instantTftWatcher(command, prefix, param1, param2, message);
     }
 
-
     // Change prefix
     if(command === prefix + "lfg") {
         message.channel.send({
@@ -224,8 +255,6 @@ client.on('message', async message => {
             });
         });
     }
-
-    console.log("NISTA ME NE PREKIDA ALO");
 
     // ---------------------------
     // games.js - PART OF BOT
