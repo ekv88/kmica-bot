@@ -93,44 +93,44 @@ client.on('message', async message => {
         musicCommandWatcher(command, prefix, param1, param2, message);
     }
 
-    // if(message.channel.id === memeChannel) {
-    //     let attachArray = message.attachments.array();
-    //     if(attachArray.length > 0) {
-    //         let { id: attachId, attachment, name, size, url, height, width } = attachArray[0];
-    //         let memeDb = db.ref(`/${serverId}/memes/${attachId}`);
-    //         let preparedObj = {
-    //             id: attachId,
-    //             attachment: attachment,
-    //             name: name,
-    //             size: size,
-    //             url: url,
-    //             height: height,
-    //             width: width,
-    //             content: message.content,
-    //             channelId: message.channel.id,
-    //             authorId: message.author.id,
-    //             authorUsername: message.author.username,
-    //         }
-    //         memeDb.set(preparedObj).then(_ => {
-    //             let memeLord = db.ref(`/${serverId}/meme-lords/${message.author.id}`);
-    //             let prepareLord = {
-    //                 id: message.author.id,
-    //                 username: message.author.username,
-    //                 discriminator: message.author.discriminator,
-    //                 avatar: message.author.avatar,
-    //             }
-    //             memeLord.set(prepareLord);
-    //         });
-    //
-    //         if(memeMirrorChannel) {
-    //             const memeAttach = new MessageAttachment(attachment);
-    //             // Send the attachment in the message channel with a content
-    //             client.channels.cache.get(memeMirrorChannel).send(`Mirror memara od ${message.author} iz ${message.channel.guild}:`, memeAttach);
-    //         }
-    //
-    //         console.log("ID: ", attachArray[0].id, ", Nova MIMARA!")
-    //     }
-    // }
+    if(message.channel.id === memeChannel) {
+        let attachArray = message.attachments.array();
+        if(attachArray.length > 0) {
+            let { id: attachId, attachment, name, size, url, height, width } = attachArray[0];
+            let memeDb = db.ref(`/${serverId}/memes/${attachId}`);
+            let preparedObj = {
+                id: attachId,
+                attachment: attachment,
+                name: name,
+                size: size,
+                url: url,
+                height: height,
+                width: width,
+                content: message.content,
+                channelId: message.channel.id,
+                authorId: message.author.id,
+                authorUsername: message.author.username,
+            }
+            memeDb.set(preparedObj).then(_ => {
+                let memeLord = db.ref(`/${serverId}/meme-lords/${message.author.id}`);
+                let prepareLord = {
+                    id: message.author.id,
+                    username: message.author.username,
+                    discriminator: message.author.discriminator,
+                    avatar: message.author.avatar,
+                }
+                memeLord.set(prepareLord);
+            });
+
+            if(memeMirrorChannel) {
+                const memeAttach = new MessageAttachment(attachment);
+                // Send the attachment in the message channel with a content
+                client.channels.cache.get(memeMirrorChannel).send(`Mirror memara od ${message.author} iz ${message.channel.guild}:`, memeAttach);
+            }
+
+            console.log("ID: ", attachArray[0].id, ", Nova MIMARA!")
+        }
+    }
     // Meme methods att - name, id, size, url, attachment
 
 
