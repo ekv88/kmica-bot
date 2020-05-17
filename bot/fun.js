@@ -1,5 +1,6 @@
 const https = require("https");
 const { randomColor } = require('./utils.js');
+const { db } = require('../db.js');
 
 // Send 1 or more cats as single messages using message object
 const sendCat = (quantity = 1, sendTo, message) =>
@@ -70,10 +71,22 @@ const getCat = (command, prefix, param1, param2, message) => {
     if(command === prefix + "cat") sendCat(param1, param2, message);
 };
 
+
+const getTopMemeLords = (command, prefix, param1, param2, message) => {
+    if(command === prefix + "memeLords") {
+        db.ref(`/${serverId}/roles`)
+            .once("value", (snap) => {
+                snap.val()
+            });
+    }
+}
+
+
 // Export methods
 module.exports = {
 	getDoggos: getDoggos,
 	getDog: getDog,
 	getCats: getCats,
 	getCat: getCat,
+    getTopMemeLords: getTopMemeLords
 };

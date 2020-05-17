@@ -1,6 +1,6 @@
 // Extract the required classes from the discord.js module
 const Discord = require('discord.js');
-const { Client, Attachment } = Discord;
+const { Client, Attachment, MessageAttachment  } = Discord;
 const { serverInitCheck, db, getRoles } = require('./db');
 const settings = require('./config.json');
 
@@ -11,7 +11,7 @@ const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval
 // Admin parts of bot
 const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot, sendToGulag } = require('./bot/admin.js');
 // Doggos and cats man <3
-const { getDoggos, getDog, getCats, getCat } = require('./bot/fun.js');
+const { getDoggos, getDog, getCats, getCat, getTopMemeLords } = require('./bot/fun.js');
 
 // Init Google dialogflow session
 // const sessionClient = new dialogflow.SessionsClient();
@@ -75,7 +75,7 @@ client.on('message', async message => {
     }
 
     // Extract params
-	let { prefix, musicWatcher, memeChannel } = SERVER_CONFIG[serverId];
+	let { prefix, musicWatcher, memeChannel, memeMirrorChannel } = SERVER_CONFIG[serverId];
 
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
@@ -120,7 +120,13 @@ client.on('message', async message => {
                 }
                 memeLord.set(prepareLord);
             });
-            // let memeDb = db.ref(`/${serverId}/memes/${attachId}`);
+
+            if(memeMirrorChannel) {
+                const memeAttach = new MessageAttachment(attachment);
+                // Send the attachment in the message channel with a content
+                client.channels.cache.get(memeMirrorChannel).send(`Mirror memara od ${message.author} iz ${message.channel.guild}:`, memeAttach);
+            }
+
             console.log("ID: ", attachArray[0].id, ", Nova MIMARA!")
         }
     }
