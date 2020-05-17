@@ -72,11 +72,16 @@ const getCat = (command, prefix, param1, param2, message) => {
 };
 
 
-const getTopMemeLords = (command, prefix, param1, param2, message) => {
-    if(command === prefix + "memeLords") {
-        db.ref(`/${serverId}/roles`)
+const getTopMemeLords = (command, prefix, param1, param2, message, serverId) => {
+    if(command === prefix + "meme-lords") {
+        db.ref(`/${serverId}/memes`)
             .once("value", (snap) => {
-                snap.val()
+                let memes = snap.val();
+                let memeLords = Object.keys(memes).filter(item => memeLords[memes[memeId].authorId] !== undefined).reduce((memeLords, memeId) => {
+                    memeLords[memes[memeId].authorId] = memeLords[memes[memeId].authorId] ? memeLords[memes[memeId].authorId]++ : 1
+                }, {})
+                console.log(memeLords)
+                //memes.map(meme => console.log(meme))
             });
     }
 }
