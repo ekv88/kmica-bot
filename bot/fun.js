@@ -77,11 +77,26 @@ const getTopMemeLords = (command, prefix, param1, param2, message, serverId) => 
         db.ref(`/${serverId}/memes`)
             .once("value", (snap) => {
                 let memes = snap.val();
-                let memeLords = Object.keys(memes).filter(item => memeLords[memes[memeId].authorId] !== undefined).reduce((memeLords, memeId) => {
-                    memeLords[memes[memeId].authorId] = memeLords[memes[memeId].authorId] ? memeLords[memes[memeId].authorId]++ : 1
-                }, {})
-                console.log(memeLords)
-                //memes.map(meme => console.log(meme))
+                let memeLords = {};
+                Object.keys(memes)
+                    .filter(memeId => memes[memeId].authorId !== undefined)
+                    .map(memeId => memeLords[memes[memeId].authorId] = memeLords[memes[memeId].authorId] ? memeLords[memes[memeId].authorId] + 1 : 1);
+
+                memeLords = Object.keys(memeLords)
+                    .map(id => ({ userId: id, points: memeLords[id]}))
+                    .sort((a, b) => (a.points > b.points) ? -1 : 1)
+                    .slice(0, 5);
+
+                message.channel.send({
+                    "embed": {
+                        "title": "Top " + memeLords.length + " meme lords",
+                        color: randomColor(),
+                        "fields": memeLords.map((lord, key) => ({
+                            name: (key + 1) + ". mesto, " + lord.points + " poena!",
+                            value: "<@" + lord.userId + ">"
+                        }))
+                    }
+                });
             });
     }
 }
