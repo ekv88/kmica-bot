@@ -176,6 +176,9 @@ client.on('message', async message => {
 	// Get bunch of kittens images
 	getCats(command, prefix, param1, param2, message);
 
+	// Get top meme lords
+    getTopMemeLords(command, prefix, param1, param2, message, serverId);
+
 
     // ---------------------------
     // utils.js - PART OF BOT
@@ -244,8 +247,6 @@ client.on('message', async message => {
 
         // Refresh TFT watcher right now - Use this for tests
         instantTftWatcher(command, prefix, param1, param2, message);
-
-        getTopMemeLords(command, prefix, param1, param2, message, serverId);
     }
 
     // Change prefix
