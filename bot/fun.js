@@ -1,4 +1,5 @@
 const https = require("https");
+const fetch = require("node-fetch");
 const { randomColor } = require('./utils.js');
 const { db } = require('../db.js');
 
@@ -72,8 +73,8 @@ const getCat = (command, prefix, param1, param2, message) => {
 };
 
 
-const getTopMemeLords = (command, prefix, param1, param2, message, serverId) => {
-    if(command === prefix + "meme-lords") {
+const getTopMemeLords = (command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment) => {
+    if(command === prefix + "meme-lordss") {
         db.ref(`/${serverId}/memes`)
             .once("value", (snap) => {
                 let memes = snap.val();
@@ -101,6 +102,48 @@ const getTopMemeLords = (command, prefix, param1, param2, message, serverId) => 
     }
 }
 
+const getMemeLord = async (command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment) => {
+    if(command === prefix + "meme-lord") {
+        db.ref(`/${serverId}/memes`)
+            .once("value", (snap) => {
+                let memes = snap.val();
+                let memeLords = {};
+                Object.keys(memes)
+                    .filter(memeId => memes[memeId].authorId !== undefined)
+                    .map(memeId => memeLords[memes[memeId].authorId] = memeLords[memes[memeId].authorId] ? memeLords[memes[memeId].authorId] + 1 : 1);
+
+                memeLords = Object.keys(memeLords)
+                    .map(id => ({ userId: id, points: memeLords[id]}))
+                    .sort((a, b) => (a.points > b.points) ? -1 : 1)
+                    .slice(0);
+
+                let topLord = message.guild.members.cache.find(user => user.id === memeLords[0].userId).user
+
+                fetch(memeGeneratorUrl + '?avatar=' + topLord.avatar + '&userId=' + topLord.id + '&username=' + topLord.username)
+                    .then(res => res.json())
+                    .then(json => {
+                        const attachment = new MessageAttachment(memeGeneratorUrl + json.url);
+                        message.channel.send(`**Gospodin <@${topLord.id}> je meme lord!**`, attachment)
+                    })
+                    .catch(error => console.log(error));
+            });
+    }
+}
+
+const getFakDat = async (command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment) => {
+    if(command === prefix + "fak") {
+        let users = message.mentions.users.map(user => ({ id: user.id, username: user.username, avatar: user.avatar}))
+        if(users.length > 2) return false;
+
+        fetch(encodeURI(memeGeneratorUrl+`jebe.php?avatar1=${users[0].avatar}&userId1=${users[0].id}&username1=${users[0].username}&avatar2=${users[1].avatar}&userId2=${users[1].id}&username2=`+users[1].username))
+            .then(res => res.json())
+            .then(json => {
+                const attachment = new MessageAttachment(memeGeneratorUrl + json.url);
+                message.channel.send(`**Samo da vam kazem sta sam saznao:**`, attachment)
+            }).catch(error => console.log(error));
+    }
+}
+
 
 // Export methods
 module.exports = {
@@ -108,5 +151,7 @@ module.exports = {
 	getDog: getDog,
 	getCats: getCats,
 	getCat: getCat,
-    getTopMemeLords: getTopMemeLords
+    getTopMemeLords: getTopMemeLords,
+    getMemeLord: getMemeLord,
+    getFakDat: getFakDat,
 };

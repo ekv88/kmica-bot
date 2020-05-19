@@ -11,7 +11,7 @@ const { addUserToLolWatchList, deleteUserFromLolWatchList, setLolWatcherInterval
 // Admin parts of bot
 const { botDebugStats, sayToAllChannels, rebootBot, shutdownBot, sendToGulag } = require('./bot/admin.js');
 // Doggos and cats man <3
-const { getDoggos, getDog, getCats, getCat, getTopMemeLords } = require('./bot/fun.js');
+const { getDoggos, getDog, getCats, getCat, getTopMemeLords, getMemeLord, getFakDat } = require('./bot/fun.js');
 
 // Init Google dialogflow session
 // const sessionClient = new dialogflow.SessionsClient();
@@ -76,7 +76,7 @@ client.on('message', async message => {
     }
 
     // Extract params
-	let { prefix, musicWatcher, memeChannel, memeMirrorChannel } = SERVER_CONFIG[serverId];
+	let { prefix, musicWatcher, memeChannel, memeMirrorChannel, memeGeneratorUrl } = SERVER_CONFIG[serverId];
 
     let command = message.content.split(" ")[0] ? message.content.split(" ")[0] : null;
     let param1 = message.content.split(" ")[1] ? message.content.split(" ")[1] : null;
@@ -177,7 +177,11 @@ client.on('message', async message => {
 	getCats(command, prefix, param1, param2, message);
 
 	// Get top meme lords
-    getTopMemeLords(command, prefix, param1, param2, message, serverId);
+    getTopMemeLords(command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment);
+
+    getMemeLord(command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment);
+
+    getFakDat(command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment);
 
 
     // ---------------------------

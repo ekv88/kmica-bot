@@ -1,5 +1,4 @@
 const settings = require('../config.json');
-const https = require("https");
 const fetch = require("node-fetch");
 const { importRiotUserList } = require('../data/ritoUserList.js');
 const { randomFlameMsg, randomFlameTitle, randomColor, randomNumber } = require('./utils.js');
