@@ -74,7 +74,7 @@ const getCat = (command, prefix, param1, param2, message) => {
 
 
 const getTopMemeLords = (command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment) => {
-    if(command === prefix + "meme-lordss") {
+    if(command === prefix + "meme-lords") {
         db.ref(`/${serverId}/memes`)
             .once("value", (snap) => {
                 let memes = snap.val();
@@ -103,7 +103,7 @@ const getTopMemeLords = (command, prefix, param1, param2, message, serverId, mem
 }
 
 const getMemeLord = async (command, prefix, param1, param2, message, serverId, memeGeneratorUrl, MessageAttachment) => {
-    if(command === prefix + "meme-lords") {
+    if(command === prefix + "meme-lord") {
         db.ref(`/${serverId}/memes`)
             .once("value", (snap) => {
                 let memes = snap.val();
