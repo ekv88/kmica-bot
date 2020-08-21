@@ -71,7 +71,8 @@ const musicCommandWatcher = (command, prefix, param1, param2, message) => {
 				let urlz = [
 					'https://www.youtube.com/watch?v=XY55rmPzd4M', 
 					'https://www.youtube.com/watch?v=ODcPX_gwhdY', 
-					'https://www.youtube.com/watch?v=Y1uqniT07RU', 
+					'https://www.youtube.com/watch?v=Y1uqniT07RU',
+					'https://www.youtube.com/watch?v=9ZrAYxWPN6c',
 					'https://www.youtube.com/watch?v=PUcf5Yw75gA'
 				];
 				const stream = ytdl(urlz[randomNumber(urlz.length)], { filter : 'audioonly' });
