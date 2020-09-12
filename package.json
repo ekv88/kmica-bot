@@ -21,7 +21,7 @@
     "dialogflow": "^1.2.0",
     "discord.js": "^12.2.0",
     "firebase-admin": "^8.12.1",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "ytdl-core": "^2.1.2"
   },
   "devDependencies": {
